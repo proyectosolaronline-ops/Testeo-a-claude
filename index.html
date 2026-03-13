@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Guardar</title>
+<style>
+  body { font-family: sans-serif; max-width: 400px; margin: 40px auto; padding: 1rem; background: #111; color: #fff; }
+  h2 { color: #FFD600; }
+  input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; font-size: 15px; }
+  input { background: #222; color: #fff; border: 1px solid #444; }
+  button { background: #FFD600; color: #000; font-weight: bold; cursor: pointer; }
+  #preview { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; display: none; margin: 8px 0; }
+  #msg { padding: 10px; border-radius: 8px; margin-top: 10px; display: none; text-align: center; }
+  .ok  { background: rgba(34,197,94,.2);  color: #22c55e; display: block !important; }
+  .err { background: rgba(239,68,68,.2);  color: #ef4444; display: block !important; }
+</style>
+</head>
+<body>
+
+<h2>Test Guardar en Sheet</h2>
+
+<input type="text" id="nombre" placeholder="Nombre">
+
+<input type="file" id="imagen" accept="image/*" onchange="verImagen(this)">
+<img id="preview">
+
+<button onclick="guardar()">💾 Guardar</button>
+
+<div id="msg"></div>
+
+<script>
+// ← PON AQUÍ TU URL DEL APPS SCRIPT
+const APPS_URL = "PEGA_TU_URL_AQUI";
+
+function verImagen(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('preview').src = e.target.result;
+    document.getElementById('preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function guardar() {
+  const nombre = document.getElementById('nombre').value.trim();
+  if (!nombre) { mostrar('Escribe un nombre', 'err'); return; }
+
+  const fd = new FormData();
+  fd.append('action', 'guardar');
+  fd.append('nombre', nombre);
+
+  const fileInput = document.getElementById('imagen');
+  if (fileInput.files[0]) {
+    fd.append('imagen', fileInput.files[0]);
+  }
+
+  mostrar('Guardando...', '');
+  try {
+    const res = await fetch(APPS_URL, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.ok) mostrar('✅ ' + data.mensaje, 'ok');
+    else mostrar('❌ ' + data.error, 'err');
+  } catch(e) {
+    mostrar('❌ ' + e.message, 'err');
+  }
+}
+
+function mostrar(txt, cls) {
+  const el = document.getElementById('msg');
+  el.textContent = txt;
+  el.className = cls;
+}
+</script>
+</body>
+</html>
