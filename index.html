@@ -10,18 +10,32 @@
   .row{display:flex;gap:.5rem;padding:.4rem 0;border-bottom:1px solid #222;}
   .key{color:#FFD700;min-width:180px;flex-shrink:0;}
   .val{color:#f5f5f5;word-break:break-all;}
-  .val.img{max-width:80px;max-height:80px;object-fit:contain;display:block;margin-top:.3rem;}
   .seccion{color:#555;font-size:.75rem;text-transform:uppercase;letter-spacing:2px;margin:1rem 0 .4rem;}
   #status{color:#888;margin-bottom:1rem;font-size:.85rem;}
-  .err{color:#e53e3e;}
+  .btns{display:flex;gap:.5rem;margin:1rem 0;flex-wrap:wrap;}
+  .btn{padding:.6rem 1.2rem;border:none;border-radius:8px;cursor:pointer;font-family:monospace;font-size:.85rem;font-weight:700;}
+  .btn-copy{background:#333;color:#FFD700;border:1px solid #FFD700;}
+  .btn-pdf{background:#FFD700;color:#000;}
+  .btn-copy:active,.btn-pdf:active{opacity:.8;}
+  #raw-box{background:#111;border:1px solid #333;border-radius:8px;padding:1rem;font-size:.72rem;color:#aaa;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow-y:auto;margin-top:.5rem;}
 </style>
 </head>
 <body>
-<h2>🔍 Parámetros del Admin</h2>
+<h2>🔍 Debug Admin — Sheet Params</h2>
 <div id="status">Cargando...</div>
+<div class="btns">
+  <button class="btn btn-copy" onclick="copiar()">📋 Copiar JSON</button>
+  <button class="btn btn-pdf"  onclick="generarPDF()">📄 Descargar PDF</button>
+</div>
 <div id="output"></div>
+<div class="seccion">── JSON RAW ──</div>
+<div id="raw-box">esperando...</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const URL = "https://script.google.com/macros/s/AKfycbwwnWMDlxiaf6-MUEQcY2eD34VQi3wwVicg0b_40SHi7OT2g2Ylf7jrWDQImbqLbdb9/exec";
+let rawData = {};
+let lineas  = []; // para el PDF
 
 async function cargar(accion){
   try{
@@ -31,20 +45,22 @@ async function cargar(accion){
 }
 
 function row(k, v){
+  lineas.push({ k, v: String(v).slice(0,300) });
   const div = document.createElement('div');
   div.className = 'row';
-  const isImg = typeof v === 'string' && (v.startsWith('data:image') || v.startsWith('http'));
+  const isImg = typeof v==='string' && v.length>100 && (v.startsWith('data:image')||v.startsWith('http'));
   div.innerHTML = `<span class="key">${k}</span><span class="val">${
-    isImg && v.length > 100
-      ? `<img class="val img" src="${v}"><span style="color:#555;font-size:.7rem">(${v.length} chars)</span>`
-      : String(v).slice(0, 300)
+    isImg
+      ? `<img style="max-width:70px;max-height:70px;object-fit:contain;display:block" src="${v}"><span style="color:#555;font-size:.7rem">(${v.length} chars)</span>`
+      : String(v).slice(0,300)
   }</span>`;
   return div;
 }
 
 function seccion(txt){
+  lineas.push({ seccion: txt });
   const d = document.createElement('div');
-  d.className = 'seccion'; d.textContent = '── '+txt+' ──';
+  d.className='seccion'; d.textContent='── '+txt+' ──';
   return d;
 }
 
@@ -52,43 +68,85 @@ async function init(){
   const out = document.getElementById('output');
   const st  = document.getElementById('status');
 
-  // leerTodo
   st.textContent = 'Llamando leerTodo...';
   const todo = await cargar('leerTodo');
-  st.textContent = 'Respuesta recibida ✓';
+  rawData = todo;
+  document.getElementById('raw-box').textContent = JSON.stringify(todo, null, 2).slice(0,4000);
+  st.textContent = '✅ Respuesta recibida';
 
-  // Mostrar keys raíz
-  out.appendChild(seccion('Keys raíz de leerTodo'));
-  Object.keys(todo).forEach(k => {
+  out.appendChild(seccion('Keys raíz — leerTodo'));
+  Object.keys(todo).forEach(k=>{
     const v = todo[k];
-    if(typeof v === 'object' && !Array.isArray(v)){
-      out.appendChild(row(k, '[objeto] → ' + Object.keys(v).join(', ')));
-    } else if(Array.isArray(v)){
-      out.appendChild(row(k, '[array] '+v.length+' items'));
-    } else {
-      out.appendChild(row(k, v));
-    }
+    if(Array.isArray(v))        out.appendChild(row(k, '[array] '+v.length+' items'));
+    else if(typeof v==='object') out.appendChild(row(k, '[objeto] → '+Object.keys(v).join(', ')));
+    else                         out.appendChild(row(k, v));
   });
 
-  // Si hay config, mostrar sus campos
   const cfg = todo.config || todo.data || null;
-  if(cfg && typeof cfg === 'object'){
+  if(cfg && typeof cfg==='object'){
     out.appendChild(seccion('Campos de config'));
-    Object.entries(cfg).forEach(([k,v]) => out.appendChild(row(k, v)));
+    Object.entries(cfg).forEach(([k,v])=>out.appendChild(row(k,v)));
   }
 
-  // leerConfig por separado
   out.appendChild(seccion('leerConfig directo'));
   const conf = await cargar('leerConfig');
-  Object.keys(conf).forEach(k => {
+  Object.keys(conf).forEach(k=>{
     const v = conf[k];
-    if(typeof v === 'object'){
-      out.appendChild(row(k+'  [obj]', Object.keys(v).join(', ')));
-      Object.entries(v).forEach(([k2,v2]) => out.appendChild(row('  '+k2, v2)));
+    if(typeof v==='object'){
+      out.appendChild(row(k+' [obj]', Object.keys(v).join(', ')));
+      Object.entries(v).forEach(([k2,v2])=>out.appendChild(row('  '+k2, v2)));
     } else {
       out.appendChild(row(k, v));
     }
   });
+}
+
+function copiar(){
+  const txt = JSON.stringify(rawData, null, 2);
+  navigator.clipboard.writeText(txt).then(()=>{
+    const btn = document.querySelector('.btn-copy');
+    btn.textContent='✅ Copiado!';
+    setTimeout(()=>btn.textContent='📋 Copiar JSON', 2000);
+  });
+}
+
+function generarPDF(){
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+  const W=210, M=14;
+  let y = 20;
+
+  doc.setFillColor(10,10,10);
+  doc.rect(0,0,W,297,'F');
+  doc.setTextColor(255,214,0);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(14);
+  doc.text('DEBUG — Sheet Admin Params', M, y); y+=8;
+
+  doc.setFontSize(7); doc.setTextColor(100,100,100);
+  doc.text('Generado: '+new Date().toLocaleString('es-MX'), M, y); y+=8;
+
+  lineas.forEach(l=>{
+    if(y > 280){ doc.addPage(); doc.setFillColor(10,10,10); doc.rect(0,0,W,297,'F'); y=15; }
+
+    if(l.seccion){
+      y+=3;
+      doc.setFontSize(7); doc.setTextColor(80,80,80);
+      doc.text('── '+l.seccion.toUpperCase()+' ──', M, y); y+=5;
+    } else {
+      // key
+      doc.setFontSize(7.5); doc.setTextColor(255,214,0); doc.setFont('helvetica','bold');
+      doc.text(String(l.k).slice(0,35), M, y);
+      // value
+      doc.setTextColor(220,220,220); doc.setFont('helvetica','normal');
+      const val = String(l.v).slice(0,120);
+      const wrapped = doc.splitTextToSize(val, W - M - 65);
+      doc.text(wrapped, M+65, y);
+      y += Math.max(5, wrapped.length * 4);
+    }
+  });
+
+  doc.save('debug-admin-'+Date.now()+'.pdf');
 }
 
 init();
