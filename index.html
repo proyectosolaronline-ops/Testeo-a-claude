@@ -3,76 +3,95 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test Guardar</title>
+<title>Debug Admin</title>
 <style>
-  body { font-family: sans-serif; max-width: 400px; margin: 40px auto; padding: 1rem; background: #111; color: #fff; }
-  h2 { color: #FFD600; }
-  input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; font-size: 15px; }
-  input { background: #222; color: #fff; border: 1px solid #444; }
-  button { background: #FFD600; color: #000; font-weight: bold; cursor: pointer; }
-  #preview { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; display: none; margin: 8px 0; }
-  #msg { padding: 10px; border-radius: 8px; margin-top: 10px; display: none; text-align: center; }
-  .ok  { background: rgba(34,197,94,.2);  color: #22c55e; display: block !important; }
-  .err { background: rgba(239,68,68,.2);  color: #ef4444; display: block !important; }
+  body{background:#0a0a0a;color:#f5f5f5;font-family:monospace;padding:1rem;}
+  h2{color:#FFD700;margin-bottom:1rem;}
+  .row{display:flex;gap:.5rem;padding:.4rem 0;border-bottom:1px solid #222;}
+  .key{color:#FFD700;min-width:180px;flex-shrink:0;}
+  .val{color:#f5f5f5;word-break:break-all;}
+  .val.img{max-width:80px;max-height:80px;object-fit:contain;display:block;margin-top:.3rem;}
+  .seccion{color:#555;font-size:.75rem;text-transform:uppercase;letter-spacing:2px;margin:1rem 0 .4rem;}
+  #status{color:#888;margin-bottom:1rem;font-size:.85rem;}
+  .err{color:#e53e3e;}
 </style>
 </head>
 <body>
-
-<h2>Test Guardar en Sheet</h2>
-
-<input type="text" id="nombre" placeholder="Nombre">
-
-<input type="file" id="imagen" accept="image/*" onchange="verImagen(this)">
-<img id="preview">
-
-<button onclick="guardar()">💾 Guardar</button>
-
-<div id="msg"></div>
-
+<h2>🔍 Parámetros del Admin</h2>
+<div id="status">Cargando...</div>
+<div id="output"></div>
 <script>
-// ← PON AQUÍ TU URL DEL APPS SCRIPT
-const APPS_URL = "PEGA_TU_URL_AQUI";
+const URL = "https://script.google.com/macros/s/AKfycbwwnWMDlxiaf6-MUEQcY2eD34VQi3wwVicg0b_40SHi7OT2g2Ylf7jrWDQImbqLbdb9/exec";
 
-function verImagen(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('preview').src = e.target.result;
-    document.getElementById('preview').style.display = 'block';
-  };
-  reader.readAsDataURL(file);
+async function cargar(accion){
+  try{
+    const r = await fetch(URL+"?accion="+accion+"&t="+Date.now());
+    return await r.json();
+  }catch(e){ return {error: e.message}; }
 }
 
-async function guardar() {
-  const nombre = document.getElementById('nombre').value.trim();
-  if (!nombre) { mostrar('Escribe un nombre', 'err'); return; }
+function row(k, v){
+  const div = document.createElement('div');
+  div.className = 'row';
+  const isImg = typeof v === 'string' && (v.startsWith('data:image') || v.startsWith('http'));
+  div.innerHTML = `<span class="key">${k}</span><span class="val">${
+    isImg && v.length > 100
+      ? `<img class="val img" src="${v}"><span style="color:#555;font-size:.7rem">(${v.length} chars)</span>`
+      : String(v).slice(0, 300)
+  }</span>`;
+  return div;
+}
 
-  const fd = new FormData();
-  fd.append('action', 'guardar');
-  fd.append('nombre', nombre);
+function seccion(txt){
+  const d = document.createElement('div');
+  d.className = 'seccion'; d.textContent = '── '+txt+' ──';
+  return d;
+}
 
-  const fileInput = document.getElementById('imagen');
-  if (fileInput.files[0]) {
-    fd.append('imagen', fileInput.files[0]);
+async function init(){
+  const out = document.getElementById('output');
+  const st  = document.getElementById('status');
+
+  // leerTodo
+  st.textContent = 'Llamando leerTodo...';
+  const todo = await cargar('leerTodo');
+  st.textContent = 'Respuesta recibida ✓';
+
+  // Mostrar keys raíz
+  out.appendChild(seccion('Keys raíz de leerTodo'));
+  Object.keys(todo).forEach(k => {
+    const v = todo[k];
+    if(typeof v === 'object' && !Array.isArray(v)){
+      out.appendChild(row(k, '[objeto] → ' + Object.keys(v).join(', ')));
+    } else if(Array.isArray(v)){
+      out.appendChild(row(k, '[array] '+v.length+' items'));
+    } else {
+      out.appendChild(row(k, v));
+    }
+  });
+
+  // Si hay config, mostrar sus campos
+  const cfg = todo.config || todo.data || null;
+  if(cfg && typeof cfg === 'object'){
+    out.appendChild(seccion('Campos de config'));
+    Object.entries(cfg).forEach(([k,v]) => out.appendChild(row(k, v)));
   }
 
-  mostrar('Guardando...', '');
-  try {
-    const res = await fetch(APPS_URL, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.ok) mostrar('✅ ' + data.mensaje, 'ok');
-    else mostrar('❌ ' + data.error, 'err');
-  } catch(e) {
-    mostrar('❌ ' + e.message, 'err');
-  }
+  // leerConfig por separado
+  out.appendChild(seccion('leerConfig directo'));
+  const conf = await cargar('leerConfig');
+  Object.keys(conf).forEach(k => {
+    const v = conf[k];
+    if(typeof v === 'object'){
+      out.appendChild(row(k+'  [obj]', Object.keys(v).join(', ')));
+      Object.entries(v).forEach(([k2,v2]) => out.appendChild(row('  '+k2, v2)));
+    } else {
+      out.appendChild(row(k, v));
+    }
+  });
 }
 
-function mostrar(txt, cls) {
-  const el = document.getElementById('msg');
-  el.textContent = txt;
-  el.className = cls;
-}
+init();
 </script>
 </body>
 </html>
