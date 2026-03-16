@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Editor de Apariencia — LandingKit</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#f4f4f0;--surface:#fff;--surface2:#f9f9f6;--border:#e8e8e2;
+  --accent:#1a1a1a;--accent2:#6366f1;--text:#1a1a1a;--muted:#888;
+  --danger:#ef4444;--warn:#f59e0b;--success:#16a34a;
+  --font-d:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* LOGIN */
+.login-screen{position:fixed;inset:0;background:var(--accent);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px;overflow-y:auto}
+.login-wrap{width:100%;max-width:400px;padding:20px 0}
+.login-brand{font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#555;margin-bottom:24px;text-align:center}
+.login-brand span{color:var(--accent2)}
+.login-tabs{display:flex;background:#111;border-radius:10px;padding:4px;margin-bottom:16px}
+.ltab{flex:1;padding:11px;text-align:center;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;color:#555;transition:all .15s}
+.ltab.active{background:var(--accent2);color:#fff}
+.login-card{background:var(--bg);border-radius:20px;padding:28px 24px}
+.login-title{font-family:var(--font-d);font-size:22px;font-weight:800;margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.5}
+.lfield{margin-bottom:14px}
+.lfield label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.lfield input,.lfield textarea{width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:var(--font-b);background:var(--surface);color:var(--text)}
+.lfield textarea{resize:none;min-height:80px;font-family:var(--mono);font-size:12px}
+.lfield input:focus,.lfield textarea:focus{outline:none;border-color:var(--accent2)}
+.lerr{font-size:13px;color:var(--danger);margin-bottom:12px;padding:10px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;display:none}
+.lbtn{width:100%;padding:15px;background:var(--accent2);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font-b)}
+.lbtn:disabled{opacity:.5}
+
+/* APP */
+.app{display:none;flex-direction:column;min-height:100vh;padding-bottom:30px}
+.app.visible{display:flex}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:40;background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:54px;display:flex;align-items:center;justify-content:space-between}
+.topbar-name{font-family:var(--font-d);font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.topbar-brand{font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.topbar-brand span{color:var(--accent2)}
+
+/* CONTENT */
+.content{padding:16px;flex:1}
+
+/* BUTTONS */
+.btn{padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:var(--font-b);display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn.primary{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+.btn.sm{padding:7px 12px;font-size:12px;border-radius:8px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+/* EDITOR CARD */
+.editor-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:18px}
+.editor-card-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.editor-card-title{font-family:var(--font-d);font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px}
+.editor-body{padding:16px;display:flex;flex-direction:column;gap:14px}
+
+/* PREVIEW */
+.preview-card{border-radius:12px;overflow:hidden;border:1.5px solid var(--border);background:#fff}
+.preview-banner{height:100px;background:#e0e7ff;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.preview-banner img{width:100%;height:100%;object-fit:cover}
+.preview-logo-wrap{padding:0 14px;margin-top:-20px;position:relative;z-index:1}
+.preview-logo{width:40px;height:40px;border-radius:9px;border:3px solid #fff;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.preview-logo img{width:100%;height:100%;object-fit:cover}
+.preview-info{padding:8px 14px 14px}
+.preview-name{font-weight:800;font-size:15px;margin-bottom:3px}
+.preview-desc{font-size:12px;color:#888;line-height:1.4;margin-bottom:8px}
+.preview-tag{display:inline-flex;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600}
+.preview-btn{display:block;width:100%;padding:10px;border-radius:8px;font-size:13px;font-weight:700;text-align:center;border:none;cursor:pointer;margin-top:8px}
+
+/* IMG UPLOAD */
+.img-upload-row{border:1.5px dashed var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color .15s;position:relative;display:flex;align-items:center;gap:12px;background:var(--surface)}
+.img-upload-row:hover,.img-upload-row:active{border-color:var(--accent2);background:var(--surface2)}
+.img-upload-row input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-thumb{width:46px;height:46px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;flex-shrink:0}
+.img-thumb img{width:100%;height:100%;object-fit:cover}
+.img-upload-info{flex:1}
+.img-upload-label{font-size:13px;font-weight:600;margin-bottom:2px}
+.img-upload-hint{font-size:11px;color:var(--muted)}
+
+/* COLOR */
+.color-row{display:flex;align-items:center;gap:8px}
+.color-row input[type=color]{width:40px;height:38px;padding:3px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;flex-shrink:0}
+.color-row input[type=text]{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--mono);color:var(--text);background:var(--surface)}
+.color-row input:focus{outline:none;border-color:var(--accent2)}
+
+/* FORM */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.field input,.field textarea{width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:var(--font-b);color:var(--text);background:var(--surface)}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent2)}
+.field textarea{resize:vertical;min-height:60px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* SPINNER */
+.spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);border-radius:10px;padding:11px 18px;font-size:13px;font-weight:600;z-index:9999;display:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+#toast.success{background:var(--success);color:#fff}
+#toast.error{background:var(--danger);color:#fff}
+#toast.warn{background:var(--warn);color:#fff}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-wrap">
+    <div class="login-brand">Landing<span>Kit</span> · Apariencia</div>
+    <div class="login-tabs">
+      <div class="ltab active" id="tab-owner" onclick="switchLoginTab('owner')">Dueño</div>
+      <div class="ltab" id="tab-staff" onclick="switchLoginTab('staff')">Operador</div>
+    </div>
+    <div class="login-card">
+      <!-- DUEÑO -->
+      <div id="login-owner-view">
+        <div class="login-title">Accede a tu tienda</div>
+        <div class="login-sub">Pega el código LK-... que recibiste por WhatsApp o email.</div>
+        <div class="lfield">
+          <label>Código de acceso</label>
+          <textarea id="l-code" placeholder="LK-eyJzdG9yZUlk..."></textarea>
+        </div>
+        <div class="lerr" id="l-err-owner"></div>
+        <button class="lbtn" id="l-btn-owner" onclick="doOwnerLogin()">Ingresar</button>
+      </div>
+      <!-- OPERADOR -->
+      <div id="login-staff-view" style="display:none">
+        <div class="login-title">Acceso operador</div>
+        <div class="login-sub">Usa el email y contraseña que te dio el dueño.</div>
+        <div class="lfield"><label>ID de la tienda</label><input id="l-staff-storeid" placeholder="store_abc123..."/></div>
+        <div class="lfield"><label>Email</label><input type="email" id="l-staff-email" placeholder="tu@email.com"/></div>
+        <div class="lfield"><label>Contraseña</label><input type="password" id="l-staff-pass" placeholder="••••••••"/></div>
+        <div class="lerr" id="l-err-staff"></div>
+        <button class="lbtn" id="l-btn-staff" onclick="doStaffLogin()">Ingresar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-name" id="topbar-name">Mi Tienda</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="topbar-brand">Landing<span>Kit</span></div>
+      <button class="btn ghost sm" style="padding:4px 8px" onclick="logout()">↩</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="editor-card">
+      <div class="editor-card-hdr">
+        <div class="editor-card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Apariencia de tu tienda
+        </div>
+        <button class="btn primary sm" id="btn-save-appearance" onclick="saveAppearance()">Guardar</button>
+      </div>
+      <div class="editor-body">
+
+        <!-- PREVIEW -->
+        <div class="preview-card">
+          <div class="preview-banner" id="preview-banner" style="background:#e0e7ff">
+            <span style="font-size:28px;opacity:.4">🖼️</span>
+          </div>
+          <div class="preview-logo-wrap">
+            <div class="preview-logo" id="preview-logo">🏪</div>
+          </div>
+          <div class="preview-info">
+            <div class="preview-name" id="preview-name">Nombre de tu tienda</div>
+            <div class="preview-desc" id="preview-desc">Tu descripción aquí...</div>
+            <span class="preview-tag" id="preview-tag" style="background:#6366f1;color:#fff">Tienda online</span>
+            <button class="preview-btn" id="preview-btn" style="background:#6366f1;color:#fff">Ver catálogo →</button>
+          </div>
+        </div>
+
+        <!-- NOMBRE / DESC -->
+        <div>
+          <div class="field" style="margin-bottom:10px">
+            <label>Nombre de la tienda</label>
+            <input id="ed-name" placeholder="Mi Tienda" oninput="updatePreview()"/>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Descripción / Slogan</label>
+            <textarea id="ed-desc" placeholder="Una línea que describa tu tienda..." oninput="updatePreview()"></textarea>
+          </div>
+        </div>
+
+        <!-- LOGO -->
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Logo</div>
+          <div class="img-upload-row">
+            <input type="file" accept="image/*" onchange="handleEditorImg(this,'logo')">
+            <div class="img-thumb">
+              <span id="logo-emoji">🏪</span>
+              <img id="logo-img" src="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:6px">
+            </div>
+            <div class="img-upload-info">
+              <div class="img-upload-label">Toca para subir logo</div>
+              <div class="img-upload-hint">Cuadrado — JPG, PNG — máx 3MB</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BANNER -->
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Banner / Hero</div>
+          <div class="img-upload-row">
+            <input type="file" accept="image/*" onchange="handleEditorImg(this,'banner')">
+            <div class="img-thumb">
+              <span id="banner-emoji">🖼️</span>
+              <img id="banner-img" src="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:6px">
+            </div>
+            <div class="img-upload-info">
+              <div class="img-upload-label">Toca para subir banner</div>
+              <div class="img-upload-hint">Horizontal — JPG, PNG — máx 5MB</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLORES -->
+        <div class="field-row">
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Color principal</div>
+            <div class="color-row">
+              <input type="color" id="ed-color" value="#6366f1" oninput="syncEdColor(this.value,'picker')">
+              <input type="text" id="ed-color-hex" value="#6366f1" placeholder="#6366f1" oninput="syncEdColor(this.value,'text')">
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Texto / Etiquetas</div>
+            <div class="color-row">
+              <input type="color" id="ed-text-color" value="#ffffff" oninput="syncEdTextColor(this.value,'picker')">
+              <input type="text" id="ed-text-color-hex" value="#ffffff" placeholder="#ffffff" oninput="syncEdTextColor(this.value,'text')">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const BACKEND = (new URLSearchParams(location.search).get('backend')) || localStorage.getItem('ld_backend') || '';
+let TOKEN     = localStorage.getItem('ld_token')  || '';
+let STORE_ID  = localStorage.getItem('ld_store')  || '';
+let USER_ROLE = localStorage.getItem('ld_role')   || '';
+let STORE_CFG = {};
+let ED = { logob64:'', logomime:'image/jpeg', logoname:'', bannerb64:'', bannermime:'image/jpeg', bannername:'' };
+
+window.addEventListener('load', function() {
+  var urlStore = new URLSearchParams(location.search).get('store');
+  if (urlStore) document.getElementById('l-staff-storeid').value = urlStore;
+  if (TOKEN && STORE_ID) enterApp();
+});
+
+function enterApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  loadStoreInfo();
+}
+
+function switchLoginTab(tab) {
+  document.getElementById('tab-owner').classList.toggle('active', tab==='owner');
+  document.getElementById('tab-staff').classList.toggle('active', tab==='staff');
+  document.getElementById('login-owner-view').style.display = tab==='owner' ? '' : 'none';
+  document.getElementById('login-staff-view').style.display = tab==='staff' ? '' : 'none';
+}
+
+async function doOwnerLogin() {
+  var code = document.getElementById('l-code').value.trim();
+  var btn  = document.getElementById('l-btn-owner');
+  document.getElementById('l-err-owner').style.display = 'none';
+  if (!code)    { showLErr('owner','Pega tu código LK-...'); return; }
+  if (!BACKEND) { showLErr('owner','Falta URL del backend (?backend=...)'); return; }
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Verificando...';
+  try {
+    var data = await postAPI({ action:'owner.login', accessCode: code });
+    if (!data.ok || !data.token) { showLErr('owner', data.error||'Código inválido'); return; }
+    saveSession(data.token, data.storeId, 'owner', data.name, data.ownerEmail);
+    enterApp();
+  } catch(e) { showLErr('owner','Error: '+e.message); }
+  finally { btn.disabled=false; btn.textContent='Ingresar'; }
+}
+
+async function doStaffLogin() {
+  var storeId = document.getElementById('l-staff-storeid').value.trim();
+  var email   = document.getElementById('l-staff-email').value.trim();
+  var pass    = document.getElementById('l-staff-pass').value;
+  var btn     = document.getElementById('l-btn-staff');
+  document.getElementById('l-err-staff').style.display = 'none';
+  if (!storeId||!email||!pass) { showLErr('staff','Completa todos los campos'); return; }
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Verificando...';
+  try {
+    var data = await postAPI({ action:'staff.login', storeId:storeId, email:email, password:pass });
+    if (!data.ok || !data.token) { showLErr('staff', data.error||'Credenciales inválidas'); return; }
+    saveSession(data.token, data.storeId, 'staff', data.name, email);
+    enterApp();
+  } catch(e) { showLErr('staff','Error: '+e.message); }
+  finally { btn.disabled=false; btn.textContent='Ingresar'; }
+}
+
+function saveSession(token, storeId, role, name, email) {
+  TOKEN=token; STORE_ID=storeId; USER_ROLE=role;
+  localStorage.setItem('ld_token',   token);
+  localStorage.setItem('ld_store',   storeId);
+  localStorage.setItem('ld_role',    role);
+  localStorage.setItem('ld_backend', BACKEND);
+  document.getElementById('topbar-name').textContent = name || 'Mi Tienda';
+}
+
+function showLErr(type, msg) {
+  var el = document.getElementById('l-err-'+type);
+  el.textContent=msg; el.style.display='block';
+  document.getElementById('l-btn-'+type).disabled=false;
+  document.getElementById('l-btn-'+type).textContent='Ingresar';
+}
+
+function logout() {
+  ['ld_token','ld_store','ld_role'].forEach(function(k){ localStorage.removeItem(k); });
+  TOKEN=''; STORE_ID=''; USER_ROLE='';
+  location.reload();
+}
+
+async function postAPI(payload) {
+  var res = await fetch(BACKEND, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+async function api(action, data) {
+  data = data || {};
+  try {
+    var payload = Object.assign({ action:action, storeId:STORE_ID, token:TOKEN }, data);
+    var json = await postAPI(payload);
+    if (json.error) throw new Error(json.error);
+    return json;
+  } catch(e) { toast(e.message,'error'); return null; }
+}
+
+async function loadStoreInfo() {
+  var info = await api('store.info');
+  if (!info || !info.store) return;
+  var store = info.store;
+  STORE_CFG = store.config || {};
+  document.getElementById('topbar-name').textContent       = store.name || 'Mi Tienda';
+  document.getElementById('ed-name').value                 = store.name || '';
+  document.getElementById('ed-desc').value                 = STORE_CFG.description || '';
+  document.getElementById('ed-color').value                = STORE_CFG.primaryColor || '#6366f1';
+  document.getElementById('ed-color-hex').value            = STORE_CFG.primaryColor || '#6366f1';
+  document.getElementById('ed-text-color').value           = STORE_CFG.textColor || '#ffffff';
+  document.getElementById('ed-text-color-hex').value       = STORE_CFG.textColor || '#ffffff';
+  if (STORE_CFG.logo) {
+    var li=document.getElementById('logo-img');
+    li.src=STORE_CFG.logo; 
