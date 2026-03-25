@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA Test Móvil</title>
+
+  <meta name="theme-color" content="#1a73e8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="PWA Test">
+  <link rel="apple-touch-icon" href="../icons/icon-192.png">
+  <link rel="manifest" href="../manifest.json">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 15px;
+      min-height: 100vh;
+      color: #333;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+      overflow: hidden;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    header {
+      background: #1a73e8;
+      color: white;
+      padding: 35px 20px 25px;
+      text-align: center;
+    }
+    h1 { margin: 0; font-size: 26px; font-weight: 700; }
+    p { margin: 8px 0 0; opacity: 0.9; font-size: 15px; }
+    .content { padding: 25px 20px; }
+    .status {
+      padding: 16px 18px;
+      margin: 12px 0;
+      border-radius: 12px;
+      font-size: 15.5px;
+      font-weight: 600;
+      text-align: left;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .ok    { background: #e6f7ee; color: #006d2f; border-left: 5px solid #00c853; }
+    .error { background: #fce8e6; color: #c5221f; border-left: 5px solid #ea4335; }
+    .info  { background: #e8f0fe; color: #1a73e8; border-left: 5px solid #4285f4; }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-install { background: #1a73e8; color: white; }
+    .btn-offline { background: #34a853; color: white; }
+    .btn-clear   { background: #ea4335; color: white; }
+
+    .note {
+      text-align: center;
+      font-size: 13px;
+      color: rgba(255,255,255,0.85);
+      margin-top: 25px;
+    }
+
+    /* Página Offline Bonita */
+    #offline-page {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    #offline-page h2 {
+      font-size: 24px;
+      color: #1a73e8;
+    }
+    #offline-page p {
+      color: #666;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <header>
+      <h1>🧪 PWA Test Móvil</h1>
+      <p>Prueba completa desde tu teléfono</p>
+    </header>
+
+    <div class="content" id="main-content">
+      <div class="status info" id="sw-status">Service Worker: Cargando...</div>
+      <div class="status info" id="manifest-status">Manifest + Screenshots: Cargando...</div>
+      <div class="status info" id="install-status">Prompt de Instalación: Cargando...</div>
+
+      <button class="btn-install" onclick="forceInstallPrompt()">📲 Intentar Instalar PWA</button>
+      <button class="btn-offline" onclick="testOffline()">🔌 Probar Modo Offline</button>
+      <button class="btn-clear" onclick="clearCache()">🗑️ Limpiar Caché y Recargar</button>
+    </div>
+
+    <!-- Página Offline Bonita -->
+    <div id="offline-page">
+      <h2>📴 Sin conexión</h2>
+      <p>Estás en modo offline.<br>La PWA está funcionando correctamente gracias al Service Worker.</p>
+      <button class="btn-clear" onclick="location.reload()">Recargar cuando vuelva internet</button>
+    </div>
+  </div>
+
+  <div class="note">
+    Asegúrate de que sw.js y manifest.json estén en la carpeta principal
+  </div>
+
+  <script>
+    // Detectar modo offline
+    function updateOnlineStatus() {
+      if (!navigator.onLine) {
+        document.getElementById('main-content').style.display = 'none';
+        document.getElementById('offline-page').style.display = 'block';
+      }
+    }
+    window.addEventListener('offline', updateOnlineStatus);
+    window.addEventListener('online', () => location.reload());
+
+    // Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('../sw.js')
+        .then(reg => {
+          document.getElementById('sw-status').className = 'status ok';
+          document.getElementById('sw-status').innerHTML = `✅ Service Worker Activo`;
+        })
+        .catch(err => {
+          document.getElementById('sw-status').className = 'status error';
+          document.getElementById('sw-status').innerHTML = `❌ Error SW: ${err.message}`;
+        });
+    }
+
+    // Manifest
+    fetch('../manifest.json')
+      .then(r => r.json())
+      .then(m => {
+        const hasWide = m.screenshots?.some(s => s.form_factor === 'wide');
+        const hasNarrow = m.screenshots?.some(s => !s.form_factor || s.form_factor === 'narrow');
+
+        let msg = `✅ Manifest cargado correctamente<br>`;
+        msg += hasWide ? `• Desktop (wide) ✓<br>` : `• Desktop (wide) ❌<br>`;
+        msg += hasNarrow ? `• Móvil (narrow) ✓` : `• Móvil (narrow) ❌`;
+
+        document.getElementById('manifest-status').className = 'status ok';
+        document.getElementById('manifest-status').innerHTML = msg;
+      })
+      .catch(() => {
+        document.getElementById('manifest-status').className = 'status error';
+        document.getElementById('manifest-status').textContent = '❌ Error al cargar manifest.json';
+      });
+
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('install-status').className = 'status ok';
+      document.getElementById('install-status').innerHTML = `✅ Listo para instalar`;
+    });
+
+    function forceInstallPrompt() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+      } else {
+        alert('El prompt aún no aparece.\nNavega primero en tu tienda principal y vuelve aquí.');
+      }
+    }
+
+    function testOffline() {
+      alert('✅ Activa modo avión y recarga esta página para probar el modo offline con la página bonita.');
+    }
+
+    function clearCache() {
+      if (confirm('¿Limpiar caché y recargar?')) {
+        caches.keys().then(names => {
+          Promise.all(names.map(n => caches.delete(n))).then(() => location.reload());
+        });
+      }
+    }
+  </script>
+</body>
+</html>
