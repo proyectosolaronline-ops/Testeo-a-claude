@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA Test Móvil</title>
+  <meta name="theme-color" content="#1a73e8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 15px;
+      min-height: 100vh;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+      overflow: hidden;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    header {
+      background: linear-gradient(135deg, #1a73e8, #0d47a1);
+      color: white;
+      padding: 28px 20px 22px;
+      text-align: center;
+    }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+    header p { font-size: 13px; opacity: .8; }
+    .content { padding: 18px 16px 22px; }
+    .section-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: #aaa; margin: 16px 0 7px;
+    }
+    .status {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; margin: 6px 0; border-radius: 10px;
+      font-size: 14px; font-weight: 600;
+    }
+    .status .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .ok   { background: #e6f7ee; color: #006d2f; } .ok   .dot { background: #00c853; }
+    .info { background: #e8f0fe; color: #1a73e8; } .info .dot { background: #4285f4; }
+    .warn { background: #fff8e1; color: #b45309; } .warn .dot { background: #f59e0b; }
+    .err  { background: #fdecea; color: #c62828; } .err  .dot { background: #ea4335; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+    .cell { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+    .cell small { display: block; font-size: 10px; color: #999; text-transform: uppercase; margin-bottom: 3px; }
+    .cell span  { font-size: 13px; font-weight: 600; color: #333; word-break: break-all; }
+    .manifest-box {
+      background: #f8f9fa; border-radius: 10px; padding: 12px 14px;
+      font-size: 12px; font-family: monospace; line-height: 1.8;
+      display: none; margin-top: 6px; color: #333; word-break: break-all;
+    }
+    .manifest-box.show { display: block; }
+    .manifest-box .key { color: #1a73e8; } .manifest-box .val { color: #006d2f; }
+    .tap-box {
+      background: #e8f0fe; border: 3px dashed #1a73e8; border-radius: 12px;
+      padding: 20px; margin: 10px 0; text-align: center; cursor: pointer;
+      user-select: none; transition: all .2s;
+    }
+    .tap-box:active { transform: scale(.97); }
+    .tap-title { font-size: 15px; font-weight: 700; color: #1a73e8; margin-bottom: 4px; }
+    .tap-sub   { font-size: 13px; color: #555; }
+    .progress-wrap { background: #e0e0e0; border-radius: 99px; height: 8px; margin: 8px 0; overflow: hidden; }
+    .progress-bar  { height: 100%; background: #1a73e8; border-radius: 99px; transition: width .3s; width: 0%; }
+    .btn {
+      width: 100%; padding: 14px; margin: 6px 0; border: none;
+      border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.98); opacity: .9; }
+    .btn-install { background: #1a73e8; color: white; }
+    .btn-ios     { background: #555; color: white; }
+    .btn-offline { background: #34a853; color: white; }
+    .btn-clear   { background: #ea4335; color: white; }
+    .btn-toggle  { background: #f1f3f4; color: #333; font-size: 13px; padding: 10px; }
+    .log-box {
+      background: #1a1a2e; border-radius: 10px; padding: 12px;
+      font-family: monospace; font-size: 12px; color: #00c853;
+      max-height: 140px; overflow-y: auto; display: none; margin-top: 6px; line-height: 1.6;
+    }
+    .log-box.show { display: block; }
+    .log-entry.warn-log { color: #f59e0b; }
+    .log-entry.err-log  { color: #ea4335; }
+    .ios-box {
+      background: #fff8e1; border-radius: 10px; padding: 14px;
+      font-size: 13px; color: #7c5a00; line-height: 1.6; display: none; margin: 6px 0;
+    }
+    .ios-box.show { display: block; }
+    .installed-badge {
+      display: none; background: #e6f7ee; border-radius: 10px; padding: 16px;
+      text-align: center; font-size: 15px; font-weight: 700; color: #006d2f; margin: 10px 0;
+    }
+    .installed-badge.show { display: block; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <header>
+    <h1>🧪 PWA Tester</h1>
+    <p id="header-url">cargando...</p>
+  </header>
+  <div class="content">
+
+    <div class="section-label">Estado</div>
+    <div class="status info" id="sw-status"><span class="dot"></span><span>Service Worker: verificando...</span></div>
+    <div class="status info" id="manifest-status"><span class="dot"></span><span>Manifest: cargando...</span></div>
+    <div class="status info" id="prompt-status"><span class="dot"></span><span>Prompt: esperando...</span></div>
+    <div class="status info" id="https-status"><span class="dot"></span><span>HTTPS: verificando...</span></div>
+
+    <div class="section-label">Dispositivo</div>
+    <div class="grid2">
+      <div class="cell"><small>Plataforma</small><span id="d-platform">—</span></div>
+      <div class="cell"><small>Navegador</small><span id="d-browser">—</span></div>
+      <div class="cell"><small>Display mode</small><span id="d-display">—</span></div>
+      <div class="cell"><small>Online</small><span id="d-online">—</span></div>
+    </div>
+
+    <div class="section-label">Manifest</div>
+    <button class="btn btn-toggle" onclick="toggleManifest()">👁 Ver contenido del manifest</button>
+    <div class="manifest-box" id="manifest-detail">Cargando...</div>
+
+    <div class="section-label">Interacción (requerida por Chrome)</div>
+    <div class="tap-box" id="tap-box" onclick="addTap()">
+      <div class="tap-title">👆 Toca aquí varias veces</div>
+      <div class="tap-sub" id="tap-count">0 / 10 toques</div>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <div class="installed-badge" id="installed-badge">🎉 ¡App instalada correctamente!</div>
+    <div class="ios-box" id="ios-box">
+      📱 <strong>iOS Safari:</strong> Toca <strong>Compartir ⬆️</strong> → <strong>"Agregar a inicio"</strong>
+    </div>
+
+    <div class="section-label">Acciones</div>
+    <button class="btn btn-install" onclick="tryInstall()">📲 Intentar Instalar PWA</button>
+    <button class="btn btn-ios" onclick="toggleIOS()">🍎 Instrucciones iOS / Safari</button>
+    <button class="btn btn-offline" onclick="testOffline()">🔌 Probar Modo Offline</button>
+    <button class="btn btn-clear" onclick="clearCache()">🗑️ Limpiar Caché</button>
+
+    <div class="section-label">Log de eventos</div>
+    <button class="btn btn-toggle" onclick="toggleLog()">📋 Ver log</button>
+    <div class="log-box" id="log-box"></div>
+
+  </div>
+</div>
+<script>
+  let deferredPrompt = null, tapCount = 0, showManifest = false, showLog = false;
+
+  document.getElementById('header-url').textContent = location.hostname + location.pathname;
+
+  // HTTPS
+  const isHttps = location.protocol === 'https:' || location.hostname === 'localhost';
+  setStatus('https-status', isHttps ? 'ok' : 'err', isHttps ? '✅ HTTPS activo' : '❌ Sin HTTPS — PWA no funciona');
+
+  // Dispositivo
+  const ua = navigator.userAgent;
+  const isIOS     = /iphone|ipad|ipod/i.test(ua);
+  const isAndroid = /android/i.test(ua);
+  const isSafari  = /safari/i.test(ua) && !/chrome/i.test(ua);
+  const isChrome  = /chrome/i.test(ua);
+  document.getElementById('d-platform').textContent = isIOS ? 'iOS' : isAndroid ? 'Android' : 'Desktop';
+  document.getElementById('d-browser').textContent  = isSafari ? 'Safari' : isChrome ? 'Chrome' : 'Otro';
+  document.getElementById('d-display').textContent  = window.matchMedia('(display-mode: standalone)').matches ? 'standalone ✅' : 'browser';
+  document.getElementById('d-online').textContent   = navigator.onLine ? 'Sí ✅' : 'No ❌';
+
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    document.getElementById('installed-badge').classList.add('show');
+    setStatus('prompt-status', 'ok', '✅ App ya está instalada');
+  }
+  if (isIOS && isSafari) {
+    document.getElementById('ios-box').classList.add('show');
+    setStatus('prompt-status', 'warn', '⚠️ iOS: Compartir → Agregar a inicio');
+  }
+
+  // Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => { log('SW: ' + reg.scope); setStatus('sw-status', 'ok', '✅ Service Worker activo'); })
+      .catch(e  => { log('SW error: ' + e.message, 'err'); setStatus('sw-status', 'err', '❌ SW falló: ' + e.message); });
+  } else {
+    setStatus('sw-status', 'err', '❌ SW no soportado');
+  }
+
+  // Manifest
+  fetch('manifest.json')
+    .then(r => r.json())
+    .then(data => {
+      setStatus('manifest-status', 'ok', '✅ Manifest OK — ' + (data.name || ''));
+      log('Manifest: ' + data.name);
+      renderManifest(data);
+    })
+    .catch(e => {
+      setStatus('manifest-status', 'err', '❌ Error al cargar manifest.json');
+      log('Manifest error: ' + e.message, 'err');
+    });
+
+  // Install prompt
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); deferredPrompt = e;
+    setStatus('prompt-status', 'ok', '✅ ¡Prompt listo! Pulsa "Intentar Instalar"');
+    log('beforeinstallprompt ✅');
+  });
+  window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    document.getElementById('installed-badge').classList.add('show');
+    setStatus('prompt-status', 'ok', '✅ ¡App instalada!');
+    log('appinstalled ✅');
+  });
+
+  // Toques
+  function addTap() {
+    tapCount++;
+    document.getElementById('tap-count').textContent = tapCount + ' / 10 toques';
+    document.getElementById('progress-bar').style.width = Math.min(tapCount / 10 * 100, 100) + '%';
+    if (tapCount >= 10) {
+      const b = document.getElementById('tap-box');
+      b.style.borderColor = '#34a853'; b.style.background = '#e6f7ee';
+      b.innerHTML = '<div class="tap-title" style="color:#006d2f">✅ ¡Listo!</div><div class="tap-sub">Pulsa "Intentar Instalar PWA"</div>';
+      document.getElementById('progress-bar').style.background = '#34a853';
+      log('Interacción completa');
+    }
+  }
+
+  function tryInstall() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(r => {
+        log('Resultado: ' + r.outcome);
+        setStatus('prompt-status', r.outcome === 'accepted' ? 'ok' : 'warn',
+          r.outcome === 'accepted' ? '✅ Aceptó instalar' : '⚠️ Rechazó la instalación');
+        deferredPrompt = null;
+      });
+    } else if (isIOS) {
+      toggleIOS();
+    } else {
+      log('Prompt no disponible aún', 'warn');
+      alert('⚠️ El prompt aún no está listo.\n\n• Toca el recuadro 10 veces\n• Usa Chrome (no otro navegador)\n• Si ya instalaste, no aparecerá de nuevo');
+    }
+  }
+
+  function toggleIOS() { document.getElementById('ios-box').classList.toggle('show'); }
+
+  function testOffline() {
+    alert(navigator.onLine
+      ? '📶 Estás online.\nActiva modo avión y recarga para probar offline.'
+      : '✅ Offline — Service Worker funcionando.');
+  }
+
+  function clearCache() {
+    if (confirm('¿Limpiar caché y recargar?')) {
+      caches.keys().then(names => Promise.all(names.map(n => caches.delete(n))).then(() => location.reload()));
+    }
+  }
+
+  function renderManifest(data) {
+    const el = document.getElementById('manifest-detail');
+    const fields = ['name','short_name','start_url','scope','display','theme_color','background_color','orientation','id'];
+    let html = '';
+    fields.forEach(k => { if (data[k] !== undefined) html += `<div><span class="key">${k}:</span> <span class="val">${data[k]}</span></div>`; });
+    if (data.icons)       html += `<div><span class="key">icons:</span> <span class="val">${data.icons.length} definidos</span></div>`;
+    if (data.screenshots) html += `<div><span class="key">screenshots:</span> <span class="val">${data.screenshots.length} definidas</span></div>`;
+    el.innerHTML = html || 'Sin datos';
+  }
+
+  function toggleManifest() { showManifest = !showManifest; document.getElementById('manifest-detail').classList.toggle('show', showManifest); }
+  function toggleLog()      { showLog = !showLog; document.getElementById('log-box').classList.toggle('show', showLog); }
+
+  function setStatus(id, type, msg) {
+    const el = document.getElementById(id);
+    el.className = 'status ' + type;
+    el.innerHTML = `<span class="dot"></span><span>${msg}</span>`;
+  }
+  function log(msg, type) {
+    const box = document.getElementById('log-box');
+    const t = new Date().toLocaleTimeString();
+    const cls = type === 'err' ? 'err-log' : type === 'warn' ? 'warn-log' : '';
+    box.innerHTML += `<div class="log-entry ${cls}">[${t}] ${msg}</div>`;
+    box.scrollTop = box.scrollHeight;
+  }
+</script>
+</body>
+</html>
