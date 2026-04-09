@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Directorio de Consultorios — ConsultasPro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+/* ══════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════ */
+:root{
+  --ink:#0A0F1A;
+  --ink2:#111827;
+  --surface:#141C2B;
+  --surface2:#1C2740;
+  --surface3:#243355;
+  --line:#253350;
+  --line2:#2E3F60;
+  --txt:#E8EFF8;
+  --txt2:#8AA5C4;
+  --txt3:#4A6585;
+  --accent:#00D4FF;
+  --accent2:#0099CC;
+  --green:#00E5A0;
+  --amber:#FFB800;
+  --red:#FF4D6A;
+  --ff:'Syne',sans-serif;
+  --fb:'Instrument Sans',sans-serif;
+  --r:14px;
+  --rs:8px;
+  --shadow:0 4px 24px rgba(0,0,0,.45);
+  --glow:0 0 32px rgba(0,212,255,.12);
+}
+[data-theme=light]{
+  --ink:#F0F5FB;
+  --ink2:#E4EDF8;
+  --surface:#fff;
+  --surface2:#F5F8FD;
+  --surface3:#EBF2FC;
+  --line:#D5E2F0;
+  --line2:#C2D5EC;
+  --txt:#0A1629;
+  --txt2:#3A5A80;
+  --txt3:#7A9BBF;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--fb);background:var(--ink);color:var(--txt);
+  min-height:100vh;overflow-x:hidden;
+}
+button{font-family:var(--ff);cursor:pointer;border:none;outline:none}
+input,select,textarea{font-family:var(--fb);outline:none}
+a{color:var(--accent)}
+
+/* ══ SCROLLBAR ══ */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:99px}
+
+/* ══ BACKGROUND GRID ══ */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(0,212,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,.03) 1px, transparent 1px);
+  background-size:48px 48px;
+}
+
+/* ══════════════════════════════
+   TOPBAR
+══════════════════════════════ */
+.topbar{
+  position:sticky;top:0;z-index:200;
+  height:60px;background:rgba(10,15,26,.85);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;
+  padding:0 20px;gap:14px;
+}
+.tb-logo{
+  font-family:var(--ff);font-size:18px;font-weight:800;
+  letter-spacing:-0.5px;color:var(--txt);white-space:nowrap;
+}
+.tb-logo em{color:var(--accent);font-style:normal}
+.tb-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);
+  color:var(--accent);padding:3px 10px;border-radius:99px;
+  font-size:11px;font-weight:600;letter-spacing:.5px;white-space:nowrap;
+}
+.tb-tag::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.tb-right{margin-left:auto;display:flex;gap:6px;align-items:center}
+.tb-btn{
+  height:36px;padding:0 14px;border-radius:var(--rs);
+  font-size:13px;font-weight:600;font-family:var(--ff);
+  background:var(--surface2);border:1px solid var(--line);
+  color:var(--txt2);transition:.2s;display:flex;align-items:center;gap:6px;
+}
+.tb-btn:hover{background:var(--surface3);color:var(--txt);border-color:var(--line2)}
+.tb-btn.active{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:var(--accent)}
+.tb-sep{width:1px;height:24px;background:var(--line)}
+
+/* ══════════════════════════════
+   HERO
+══════════════════════════════ */
+.hero{
+  position:relative;padding:56px 24px 44px;
+  text-align:center;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,212,255,.07) 0%, transparent 70%);
+  pointer-events:none;
+}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--accent);margin-bottom:16px;
+}
+.hero-eyebrow span{width:32px;height:1px;background:var(--accent);opacity:.5}
+.hero-title{
+  font-family:var(--ff);font-size:clamp(32px,6vw,56px);
+  font-weight:800;letter-spacing:-2px;line-height:1.05;
+  margin-bottom:14px;
+}
+.hero-title em{font-style:normal;color:var(--accent)}
+.hero-sub{
+  font-size:clamp(14px,2vw,17px);color:var(--txt2);
+  max-width:520px;margin:0 auto 28px;line-height:1.7;
+}
+
+/* ══ BUSCADOR HERO ══ */
+.search-bar{
+  display:flex;gap:0;max-width:600px;margin:0 auto;
+  background:var(--surface);border:1px solid var(--line2);
+  border-radius:var(--r);overflow:hidden;
+  box-shadow:var(--shadow),var(--glow);
+  transition:.3s;
+}
+.search-bar:focus-within{border-color:rgba(0,212,255,.4);box-shadow:var(--shadow),0 0 40px rgba(0,212,255,.15)}
+.search-bar input{
+  flex:1;min-width:0;background:transparent;border:none;
+  padding:14px 18px;font-size:15px;color:var(--txt);
+}
+.search-bar input::placeholder{color:var(--txt3)}
+.search-bar .sb-sep{width:1px;background:var(--line);flex-shrink:0;margin:10px 0}
+.search-bar select{
+  background:transparent;border:none;color:var(--txt2);
+  padding:14px 14px 14px 12px;font-size:14px;cursor:pointer;
+  appearance:none;-webkit-appearance:none;width:160px;
+}
+.search-bar select option{background:var(--surface2)}
+.search-bar button{
+  background:var(--accent);color:#000;padding:0 22px;
+  font-size:14px;font-weight:700;font-family:var(--ff);
+  transition:.2s;flex-shrink:0;white-space:nowrap;
+}
+.search-bar button:hover{background:var(--accent2);color:#fff}
+
+/* ══ FILTROS RADIUS ══ */
+.radius-bar{
+  display:flex;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap;
+}
+.radius-chip{
+  padding:6px 16px;border-radius:99px;font-size:12px;font-weight:600;
+  font-family:var(--ff);background:var(--surface2);border:1px solid var(--line);
+  color:var(--txt2);cursor:pointer;transition:.2s;
+}
+.radius-chip:hover{background:var(--surface3);color:var(--txt)}
+.radius-chip.sel{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.35);color:var(--accent)}
+
+/* ══ LOCATE BTN ══ */
+.locate-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  margin-top:10px;padding:8px 18px;border-radius:99px;
+  background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25);
+  color:var(--green);font-size:13px;font-weight:600;cursor:pointer;
+  transition:.2s;
+}
+.locate-btn:hover{background:rgba(0,229,160,.14);border-color:rgba(0,229,160,.4)}
+.locate-btn svg{width:14px;height:14px}
+
+/* ══════════════════════════════
+   LAYOUT — MAP + LIST
+══════════════════════════════ */
+.main-layout{
+  display:grid;
+  grid-template-columns:380px 1fr;
+  grid-template-rows:1fr;
+  height:calc(100vh - 60px - 220px);
+  min-height:500px;
+  position:relative;
+  z-index:1;
+}
+@media(max-width:900px){
+  .main-layout{
+    grid-template-columns:1fr;
+    grid-template-rows:320px 1fr;
+    height:auto;
+  }
+}
+
+/* ══ PANEL LISTA ══ */
+.list-panel{
+  background:var(--ink2);border-right:1px solid var(--line);
+  overflow-y:auto;overflow-x:hidden;
+  display:flex;flex-direction:column;
+}
+.list-header{
+  padding:14px 16px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;background:var(--ink2);z-index:5;
+}
+.list-count{
+  font-family:var(--ff);font-size:12px;font-weight:700;
+  color:var(--txt2);letter-spacing:.5px;text-transform:uppercase;
+}
+.list-count em{color:var(--accent);font-style:normal}
+.list-sort{
+  background:var(--surface);border:1px solid var(--line);color:var(--txt2);
+  padding:5px 10px;border-radius:var(--rs);font-size:12px;cursor:pointer;
+  appearance:none;
+}
+.list-sort option{background:var(--surface2)}
+.list-items{padding:10px;flex:1}
+
+/* ══ TARJETA CONSULTORIO ══ */
+.doc-card{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);margin-bottom:10px;padding:14px;
+  cursor:pointer;transition:.2s;position:relative;overflow:hidden;
+}
+.doc-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:transparent;transition:.2s;border-radius:3px 0 0 3px;
+}
+.doc-card:hover{background:var(--surface2);border-color:var(--line2);transform:translateX(2px)}
+.doc-card.active{border-color:rgba(0,212,255,.4);background:rgba(0,212,255,.04)}
+.doc-card.active::before{background:var(--accent)}
+.doc-card.out-of-range{opacity:.4;pointer-events:none}
+
+.dc-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
+.dc-avatar{
+  width:52px;height:52px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:800;color:#000;overflow:hidden;
+  border:2px solid var(--line);font-family:var(--ff);
+}
+.dc-avatar img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+.dc-info{flex:1;min-width:0}
+.dc-name{
+  font-family:var(--ff);font-size:15px;font-weight:700;
+  color:var(--txt);line-height:1.2;margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.dc-esp{font-size:12px;color:var(--accent);font-weight:600;margin-bottom:4px}
+.dc-dist{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;color:var(--green);font-weight:600;
+}
+.dc-dist.far{color:var(--txt3)}
+.dc-dist svg{width:11px;height:11px}
+
+.dc-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.dc-tag{
+  padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;
+  background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--txt2);
+}
+.dc-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding-top:8px;border-top:1px solid var(--line);
+}
+.dc-addr{font-size:11px;color:var(--txt3);flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dc-actions{display:flex;gap:5px;flex-shrink:0}
+.dc-act{
+  padding:4px 10px;border-radius:var(--rs);font-size:11px;font-weight:600;
+  background:var(--surface2);border:1px solid var(--line);color:var(--txt2);
+  transition:.15s;
+}
+.dc-act:hover{background:var(--surface3);color:var(--txt)}
+.dc-act.wa{background:rgba(0,229,160,.07);border-color:rgba(0,229,160,.2);color:var(--green)}
+
+/* ══ MAP ══ */
+#map{
+  position:relative;z-index:1;
+  height:100%;width:100%;background:var(--surface);
+}
+@media(max-width:900px){#map{height:320px}}
+
+/* ══ Leaflet overrides ══ */
+.leaflet-container{background:#0A1020!important}
+.leaflet-tile{filter:brightness(.7) saturate(.8) hue-rotate(200deg)}
+.leaflet-control-zoom{border:1px solid var(--line)!important;border-radius:var(--rs)!important;overflow:hidden}
+.leaflet-control-zoom a{
+  background:var(--surface)!important;color:var(--txt)!important;
+  border-color:var(--line)!important;font-size:16px!important;line-height:28px!important;
+}
+.leaflet-control-zoom a:hover{background:var(--surface2)!important}
+
+/* ══ Custom PIN ══ */
+.pin-wrap{
+  position:relative;display:flex;flex-direction:column;align-items:center;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,.5));
+}
+.pin-bubble{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--surface);border:3px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;overflow:hidden;transition:.2s;
+  font-family:var(--ff);font-weight:800;color:#000;
+}
+.pin-bubble img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.pin-bubble.out{border-color:var(--txt3);opacity:.4}
+.pin-tail{
+  width:2px;height:10px;background:var(--accent);
+  margin-top:-1px;
+}
+.pin-tail.out{background:var(--txt3)}
+.pin-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:-1px}
+.pin-dot.out{background:var(--txt3)}
+
+/* ══ POPUP ══ */
+.leaflet-popup-content-wrapper{
+  background:var(--surface)!important;border:1px solid var(--line)!important;
+  border-radius:var(--r)!important;
+  box-shadow:var(--shadow),var(--glow)!important;padding:0!important;
+}
+.leaflet-popup-tip{background:var(--surface)!important}
+.leaflet-popup-content{margin:0!important;padding:0!important;min-width:220px}
+.popup-inner{padding:16px}
+.popup-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.popup-av{
+  width:42px;height:42px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff);font-size:16px;font-weight:800;color:#000;overflow:hidden;
+}
+.popup-av img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+.popup-name{font-family:var(--ff);font-size:14px;font-weight:700;color:var(--txt)}
+.popup-esp{font-size:12px;color:var(--accent);font-weight:600;margin-top:2px}
+.popup-info{font-size:12px;color:var(--txt2);margin-bottom:10px;line-height:1.6}
+.popup-btns{display:flex;gap:6px}
+.popup-btn{
+  flex:1;text-align:center;padding:7px;border-radius:var(--rs);
+  font-size:12px;font-weight:700;font-family:var(--ff);transition:.15s;
+  border:1px solid var(--line);
+}
+.popup-btn.main{background:var(--accent);color:#000;border-color:var(--accent)}
+.popup-btn.main:hover{background:var(--accent2);color:#fff}
+.popup-btn.sec{background:var(--surface2);color:var(--txt2)}
+.popup-btn.sec:hover{background:var(--surface3);color:var(--txt)}
+
+/* ══ RANGE RING INFO ══ */
+.range-info{
+  position:absolute;top:12px;right:12px;z-index:10;
+  background:rgba(10,15,26,.85);backdrop-filter:blur(10px);
+  border:1px solid var(--line);border-radius:var(--r);
+  padding:10px 14px;font-size:12px;
+}
+.ri-label{color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:3px}
+.ri-val{color:var(--accent);font-family:var(--ff);font-size:16px;font-weight:700}
+
+/* ══ NO RESULTS ══ */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:48px 20px;text-align:center;flex:1;
+}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.4}
+.empty-title{font-family:var(--ff);font-size:16px;font-weight:700;color:var(--txt2);margin-bottom:6px}
+.empty-sub{font-size:13px;color:var(--txt3)}
+
+/* ══════════════════════════════
+   DIRECTORIO GRID — debajo del mapa
+══════════════════════════════ */
+.dir-section{
+  padding:48px 24px;position:relative;z-index:1;
+  background:var(--ink);
+}
+.sec-header{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  margin-bottom:28px;gap:16px;flex-wrap:wrap;
+}
+.sec-title-wrap{}
+.sec-eyebrow{
+  font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--accent);margin-bottom:6px;
+}
+.sec-title{
+  font-family:var(--ff);font-size:clamp(22px,4vw,32px);font-weight:800;
+  letter-spacing:-1px;color:var(--txt);
+}
+.sec-title em{font-style:normal;color:var(--accent)}
+.view-toggle{display:flex;gap:4px}
+.vt-btn{
+  padding:7px 14px;border-radius:var(--rs);font-size:12px;font-weight:600;
+  background:var(--surface2);border:1px solid var(--line);color:var(--txt2);
+  cursor:pointer;transition:.2s;
+}
+.vt-btn.sel{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:var(--accent)}
+
+/* ══ FILTROS ESPECIALIDADES ══ */
+.esp-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+.ef-chip{
+  padding:7px 16px;border-radius:99px;font-size:12px;font-weight:600;
+  background:var(--surface);border:1px solid var(--line);color:var(--txt2);
+  cursor:pointer;transition:.2s;font-family:var(--ff);
+}
+.ef-chip:hover{background:var(--surface2);color:var(--txt)}
+.ef-chip.sel{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:var(--accent)}
+
+/* ══ GRID ══ */
+.dir-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.dir-grid.list-view{grid-template-columns:1fr}
+
+/* ══ CARD DIRECTORIO ══ */
+.dir-card{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:20px;overflow:hidden;transition:.3s;
+  display:flex;flex-direction:column;
+  position:relative;
+}
+.dir-card:hover{
+  border-color:var(--line2);
+  transform:translateY(-4px);
+  box-shadow:var(--shadow),var(--glow);
+}
+.dir-card .dc-header{
+  padding:20px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:14px;
+}
+.dir-avatar{
+  width:64px;height:64px;border-radius:16px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff);font-size:24px;font-weight:800;color:#000;
+  overflow:hidden;border:2px solid var(--line2);
+}
+.dir-avatar img{width:100%;height:100%;object-fit:cover;border-radius:14px}
+.dir-meta{flex:1;min-width:0}
+.dir-name{
+  font-family:var(--ff);font-size:17px;font-weight:700;
+  color:var(--txt);margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.dir-esp{font-size:12px;color:var(--accent);font-weight:600;margin-bottom:6px}
+.dir-star{display:flex;align-items:center;gap:3px;font-size:11px;color:var(--amber)}
+.dir-body{padding:16px 20px;flex:1}
+.dir-desc{font-size:13px;color:var(--txt2);line-height:1.7;margin-bottom:14px}
+.dir-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
+.dir-chip{
+  padding:3px 10px;border-radius:99px;font-size:10px;font-weight:600;
+  background:var(--surface2);border:1px solid var(--line);color:var(--txt2);
+}
+.dir-loc{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--txt3);margin-bottom:4px;
+}
+.dir-loc svg{width:12px;height:12px;flex-shrink:0}
+
+/* ══ VIDEO EMBED ══ */
+.dir-video{
+  margin:12px 0;border-radius:10px;overflow:hidden;
+  background:#000;aspect-ratio:16/9;position:relative;
+  border:1px solid var(--line);
+}
+.dir-video iframe{width:100%;height:100%;display:block}
+.dir-video video{width:100%;height:100%;object-fit:cover}
+.vid-placeholder{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;
+  cursor:pointer;background:linear-gradient(135deg,var(--surface2),var(--surface));
+}
+.vid-play{
+  width:48px;height:48px;border-radius:50%;
+  background:var(--accent);display:flex;align-items:center;justify-content:center;
+  color:#000;font-size:18px;box-shadow:0 0 24px rgba(0,212,255,.35);
+}
+.vid-label{font-size:12px;color:var(--txt2);font-weight:600}
+
+/* ══ CARD FOOTER ══ */
+.dir-footer{
+  padding:14px 20px;border-top:1px solid var(--line);
+  display:flex;gap:8px;flex-wrap:wrap;
+}
+.dir-btn{
+  flex:1;min-width:80px;text-align:center;
+  padding:9px 12px;border-radius:10px;font-size:12px;font-weight:700;
+  font-family:var(--ff);cursor:pointer;transition:.2s;border:1px solid var(--line);
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+}
+.dir-btn.main{background:var(--accent);color:#000;border-color:var(--accent)}
+.dir-btn.main:hover{background:var(--accent2);color:#fff}
+.dir-btn.wa{background:rgba(0,229,160,.07);border-color:rgba(0,229,160,.2);color:var(--green)}
+.dir-btn.wa:hover{background:rgba(0,229,160,.14)}
+.dir-btn.ghost{background:transparent;color:var(--txt2)}
+.dir-btn.ghost:hover{background:var(--surface2);color:var(--txt)}
+
+/* ══ BADGE PLAN ══ */
+.plan-badge{
+  position:absolute;top:14px;right:14px;
+  padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.5px;
+}
+.plan-badge.pro{background:rgba(255,184,0,.12);border:1px solid rgba(255,184,0,.25);color:var(--amber)}
+.plan-badge.basic{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);color:var(--accent)}
+.plan-badge.trial{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--txt3)}
+
+/* ══════════════════════════════
+   VIDEO MODAL / EDITOR
+══════════════════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.75);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.on{display:flex}
+.modal-box{
+  background:var(--surface);border:1px solid var(--line2);
+  border-radius:20px;width:100%;max-width:600px;
+  box-shadow:var(--shadow),var(--glow);
+  overflow:hidden;
+}
+.modal-head{
+  padding:20px 24px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-title{font-family:var(--ff);font-size:16px;font-weight:700;color:var(--txt)}
+.modal-close{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--surface2);border:1px solid var(--line);
+  color:var(--txt2);font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:.2s;
+}
+.modal-close:hover{background:var(--surface3);color:var(--txt)}
+.modal-body{padding:24px}
+.modal-vid{aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000;margin-bottom:20px}
+.modal-vid iframe,.modal-vid video{width:100%;height:100%}
+
+/* ══ VIDEO EDITOR SECTION ══ */
+.vid-editor{background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.ve-title{font-family:var(--ff);font-size:13px;font-weight:700;color:var(--txt2);margin-bottom:12px;letter-spacing:.5px;text-transform:uppercase}
+.ve-tabs{display:flex;gap:4px;margin-bottom:14px}
+.ve-tab{
+  padding:6px 14px;border-radius:var(--rs);font-size:12px;font-weight:600;
+  background:var(--surface);border:1px solid var(--line);color:var(--txt3);cursor:pointer;transition:.2s;
+}
+.ve-tab.sel{background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.25);color:var(--accent)}
+.ve-panel{display:none}
+.ve-panel.on{display:block}
+.ve-input{
+  display:flex;gap:8px;
+}
+.ve-input input{
+  flex:1;background:var(--surface);border:1px solid var(--line);color:var(--txt);
+  padding:10px 14px;border-radius:var(--rs);font-size:14px;
+}
+.ve-input input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,.1)}
+.ve-input input::placeholder{color:var(--txt3)}
+.ve-btn{
+  padding:10px 18px;border-radius:var(--rs);background:var(--accent);
+  color:#000;font-size:13px;font-weight:700;font-family:var(--ff);
+  white-space:nowrap;transition:.2s;
+}
+.ve-btn:hover{background:var(--accent2);color:#fff}
+.ve-hint{font-size:11px;color:var(--txt3);margin-top:7px;line-height:1.5}
+
+.upload-area{
+  border:2px dashed var(--line2);border-radius:var(--rs);
+  padding:28px;text-align:center;cursor:pointer;transition:.2s;
+  position:relative;
+}
+.upload-area:hover{border-color:rgba(0,212,255,.4);background:rgba(0,212,255,.03)}
+.upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.ua-icon{font-size:28px;margin-bottom:8px}
+.ua-txt{font-size:13px;color:var(--txt2);line-height:1.6}
+.ua-sub{font-size:11px;color:var(--txt3);margin-top:4px}
+
+/* ══ TOAST ══ */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--surface);border:1px solid var(--line);color:var(--txt);
+  padding:12px 20px;border-radius:var(--r);font-size:13px;font-weight:600;
+  z-index:9999;pointer-events:none;transition:.3s;white-space:nowrap;
+  box-shadow:var(--shadow);
+}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#toast.ok{border-color:rgba(0,229,160,.4);color:var(--green)}
+#toast.err{border-color:rgba(255,77,106,.4);color:var(--red)}
+
+/* ══ LOADING ══ */
+.skeleton{animation:sk 1.2s linear infinite}
+.skeleton .sk-line{
+  height:14px;border-radius:7px;background:var(--surface2);margin-bottom:8px;
+}
+@keyframes sk{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ══ STATS BAR ══ */
+.stats-bar{
+  display:flex;align-items:center;gap:0;
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:0;overflow:hidden;
+  margin-bottom:32px;
+}
+.stat-item{
+  flex:1;padding:14px 16px;text-align:center;border-right:1px solid var(--line);
+}
+.stat-item:last-child{border-right:none}
+.stat-num{
+  font-family:var(--ff);font-size:22px;font-weight:800;color:var(--accent);
+  line-height:1;margin-bottom:3px;
+}
+.stat-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);font-weight:600}
+
+/* ══ LIGHT MODE ══ */
+[data-theme=light] .leaflet-tile{filter:brightness(1) saturate(1) hue-rotate(0deg)}
+[data-theme=light] .leaflet-container{background:#f0f0f0!important}
+</style>
+</head>
+<body>
+
+<!-- ══ TOPBAR ══ -->
+<nav class="topbar">
+  <div class="tb-logo">Consultas<em>Pro</em></div>
+  <div class="tb-tag">🗺️ Directorio Activo</div>
+  <div class="tb-right">
+    <button class="tb-btn" id="btn-view-map" onclick="switchView('map')">🗺️ Mapa</button>
+    <button class="tb-btn" id="btn-view-dir" onclick="switchView('dir')">☰ Directorio</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" onclick="toggleTheme()">🌓</button>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<div class="hero">
+  <div class="hero-eyebrow"><span></span> Red de Salud Verificada <span></span></div>
+  <h1 class="hero-title">Encuentra tu <em>Consultorio</em><br>más cercano</h1>
+  <p class="hero-sub">Directorio en tiempo real con mapa interactivo. Filtra por especialidad, distancia y disponibilidad.</p>
+
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="Busca por nombre, especialidad o ciudad…" oninput="onSearch()"/>
+    <div class="sb-sep"></div>
+    <select id="esp-filter" onchange="onSearch()">
+      <option value="">Todas las especialidades</option>
+      <option value="medico">Medicina General</option>
+      <option value="dentista">Odontología</option>
+      <option value="psicologo">Psicología</option>
+      <option value="nutriologo">Nutriología</option>
+      <option value="fisioterapia">Fisioterapia</option>
+      <option value="otro">Otra</option>
+    </select>
+    <button onclick="onSearch()">🔍 Buscar</button>
+  </div>
+
+  <div class="radius-bar">
+    <span style="font-size:11px;color:var(--txt3);align-self:center;margin-right:4px">Radio:</span>
+    <button class="radius-chip" data-km="0" onclick="setRadius(0,this)">Sin filtro</button>
+    <button class="radius-chip" data-km="1" onclick="setRadius(1,this)">1 km</button>
+    <button class="radius-chip sel" data-km="5" onclick="setRadius(5,this)">5 km</button>
+    <button class="radius-chip" data-km="10" onclick="setRadius(10,this)">10 km</button>
+    <button class="radius-chip" data-km="20" onclick="setRadius(20,this)">20 km</button>
+    <button class="radius-chip" data-km="50" onclick="setRadius(50,this)">50 km</button>
+  </div>
+  <button class="locate-btn" onclick="geolocate()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/><circle cx="12" cy="12" r="9" stroke-dasharray="4 2"/></svg>
+    Usar mi ubicación
+  </button>
+</div>
+
+<!-- ══ MAIN LAYOUT ══ -->
+<div class="main-layout" id="map-view">
+
+  <!-- LISTA -->
+  <div class="list-panel">
+    <div class="list-header">
+      <span class="list-count"><em id="count-vis">0</em> de <em id="count-total">0</em> consultorios</span>
+      <select class="list-sort" id="sort-sel" onchange="sortAndRender()">
+        <option value="dist">Por distancia</option>
+        <option value="name">Por nombre</option>
+        <option value="esp">Especialidad</option>
+      </select>
+    </div>
+    <div class="list-items" id="list-items">
+      <div class="empty-state">
+        <div class="empty-icon">⏳</div>
+        <div class="empty-title">Cargando consultorios…</div>
+        <div class="empty-sub">Conectando con el backend</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAPA -->
+  <div style="position:relative">
+    <div id="map"></div>
+    <div class="range-info" id="range-info" style="display:none">
+      <div class="ri-label">Radio activo</div>
+      <div class="ri-val" id="range-val">5 km</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DIRECTORIO GRID ══ -->
+<div class="dir-section" id="dir-view" style="display:none">
+  <div style="max-width:1280px;margin:0 auto">
+    <div class="stats-bar">
+      <div class="stat-item"><div class="stat-num" id="stat-total">—</div><div class="stat-lbl">Consultorios</div></div>
+      <div class="stat-item"><div class="stat-num" id="stat-cerca">—</div><div class="stat-lbl">En tu zona</div></div>
+      <div class="stat-item"><div class="stat-num" id="stat-esp">—</div><div class="stat-lbl">Especialidades</div></div>
+      <div class="stat-item"><div class="stat-num" id="stat-ciudades">—</div><div class="stat-lbl">Ciudades</div></div>
+    </div>
+
+    <div class="sec-header">
+      <div class="sec-title-wrap">
+        <div class="sec-eyebrow">Directorio Completo</div>
+        <h2 class="sec-title">Todos los <em>Consultorios</em></h2>
+      </div>
+      <div class="view-toggle">
+        <button class="vt-btn sel" id="vt-grid" onclick="setGridView('grid')">⊞ Grid</button>
+        <button class="vt-btn" id="vt-list" onclick="setGridView('list')">☰ Lista</button>
+      </div>
+    </div>
+
+    <div class="esp-filters" id="esp-filters-dir">
+      <button class="ef-chip sel" data-esp="" onclick="filterDir('')">Todos</button>
+    </div>
+
+    <div class="dir-grid" id="dir-grid"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL VIDEO ══ -->
+<div class="modal-overlay" id="video-modal" onclick="closeVideoModal(event)">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">Video del consultorio</div>
+      <button class="modal-close" onclick="closeVideoModalBtn()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-vid" id="modal-vid"></div>
+
+      <!-- Editor de video -->
+      <div class="vid-editor">
+        <div class="ve-title">📹 Configurar video</div>
+        <div class="ve-tabs">
+          <button class="ve-tab sel" onclick="setVeTab('yt',this)">▶ YouTube</button>
+          <button class="ve-tab" onclick="setVeTab('local',this)">📁 Archivo local</button>
+        </div>
+
+        <!-- YouTube panel -->
+        <div class="ve-panel on" id="ve-yt">
+          <div class="ve-input">
+            <input type="text" id="yt-url-input" placeholder="https://youtube.com/watch?v=... o ID del video"/>
+            <button class="ve-btn" onclick="applyYtVideo()">Aplicar</button>
+          </div>
+          <div class="ve-hint">Pega la URL completa de YouTube o solo el ID del video. Se embebe automáticamente.</div>
+        </div>
+
+        <!-- Local panel -->
+        <div class="ve-panel" id="ve-local">
+          <div class="upload-area" id="upload-area">
+            <input type="file" id="local-vid-input" accept="video/*" onchange="applyLocalVideo(event)"/>
+            <div class="ua-icon">🎬</div>
+            <div class="ua-txt"><strong>Arrastra un video</strong> o haz clic para elegir</div>
+            <div class="ua-sub">MP4, WebM, MOV — máx. 200 MB</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  DATOS DE DEMO (reemplaza con tu fetch real)
+// ══════════════════════════════════════════
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwu7VVHC3RgS1fXwOtnh3ebHf4Md9xVmYF8cVZznKekPVEDj79izRcQmECYPH4GLIsG/exec";
+
+var MOCK_MEDICOS = [
+  {
+    slug:"garcia-juan",nombre_legal:"Juan García López",
+    cfg:{
+      nombre_com:"Dr. Juan García",prefijo:"Dr.",especialidad_txt:"Medicina Familiar",
+      telefono:"55 1234 5678",whatsapp:"5512345678",
+      direccion:"Av. Insurgentes Sur 450, Piso 3, CDMX",
+      horario:"Lun–Vie 9:00–18:00",
+      servicios:"Consulta general\nPrimera vez\nSeguimiento\nUrgencias",
+      en_directorio:true,
+      directoryCity:"Ciudad de México",
+      locationLat:"19.3869",locationLng:"-99.1689",
+      descripcion:"Atención médica familiar personalizada con más de 15 años de experiencia. Enfoque preventivo.",
+      logo:"",video_yt:"dQw4w9WgXcQ",plan:"profesional",
+      tags:["Pediatría","Geriatría","Prevención"],stars:4.8,reviews:124
+    },plan:"profesional",activo:true
+  },
+  {
+    slug:"martinez-ana",nombre_legal:"Ana Martínez Ruiz",
+    cfg:{
+      nombre_com:"Dra. Ana Martínez",prefijo:"Dra.",especialidad_txt:"Psicología Clínica",
+      telefono:"55 9876 5432",whatsapp:"5598765432",
+      direccion:"Calle Sonora 28, Hipódromo, CDMX",
+      horario:"Lun–Sáb 10:00–20:00",
+      servicios:"Terapia individual\nTerapia de pareja\nAnsiedad\nDepresión",
+      en_directorio:true,
+      directoryCity:"Ciudad de México",
+      locationLat:"19.4150",locationLng:"-99.1700",
+      descripcion:"Especialista en terapia cognitivo-conductual. Atención empática y profesional.",
+      logo:"",video_yt:"",plan:"profesional",
+      tags:["Ansiedad","Depresión","Parejas"],stars:4.9,reviews:89
+    },plan:"profesional",activo:true
+  },
+  {
+    slug:"lopez-carlos",nombre_legal:"Carlos López Soto",
+    cfg:{
+      nombre_com:"Dr. Carlos López",prefijo:"Dr.",especialidad_txt:"Odontología Estética",
+      telefono:"55 3344 5566",whatsapp:"5533445566",
+      direccion:"Polanco, Miguel Hidalgo, CDMX",
+      horario:"Mar–Dom 9:00–17:00",
+      servicios:"Blanqueamiento\nOrtodoncia\nImplantes\nLimpieza",
+      en_directorio:true,
+      directoryCity:"Ciudad de México",
+      locationLat:"19.4300",locationLng:"-99.2000",
+      descripcion:"Sonrisa perfecta con tecnología de última generación. Blanqueamiento en una sola sesión.",
+      logo:"",video_yt:"",plan:"basico",
+      tags:["Blanqueamiento","Implantes","Ortodoncia"],stars:4.7,reviews:210
+    },plan:"basico",activo:true
+  },
+  {
+    slug:"reyes-maria",nombre_legal:"María Reyes Vega",
+    cfg:{
+      nombre_com:"Lic. María Reyes",prefijo:"Lic.",especialidad_txt:"Nutriología Clínica",
+      telefono:"55 7788 9900",whatsapp:"5577889900",
+      direccion:"Nápoles, Benito Juárez, CDMX",
+      horario:"Lun–Vie 8:00–16:00",
+      servicios:"Plan nutricional\nControl de peso\nDeporte\nEnfermedades crónicas",
+      en_directorio:true,
+      directoryCity:"Ciudad de México",
+      locationLat:"19.3980",locationLng:"-99.1800",
+      descripcion:"Planes alimenticios personalizados respaldados por evidencia científica.",
+      logo:"",video_yt:"",plan:"trial",
+      tags:["Pérdida de peso","Diabetes","Deportiva"],stars:4.6,reviews:67
+    },plan:"trial",activo:true
+  },
+  {
+    slug:"torres-pedro",nombre_legal:"Pedro Torres Campos",
+    cfg:{
+      nombre_com:"Fis. Pedro Torres",prefijo:"",especialidad_txt:"Fisioterapia Deportiva",
+      telefono:"55 1122 3344",whatsapp:"5511223344",
+      direccion:"Del Valle, Benito Juárez, CDMX",
+      horario:"Lun–Sáb 7:00–19:00",
+      servicios:"Rehabilitación\nLesiones deportivas\nMasaje terapéutico\nElectroterapia",
+      en_directorio:true,
+      directoryCity:"Ciudad de México",
+      locationLat:"19.3750",locationLng:"-99.1750",
+      descripcion:"Recuperación efectiva de lesiones con técnicas avanzadas. Especialista en atletas.",
+      logo:"",video_yt:"",plan:"basico",
+      tags:["Deportiva","Rehabilitación","Electroterapia"],stars:4.5,reviews:155
+    },plan:"basico",activo:true
+  }
+];
+
+// ══ STATE ══
+var allMedicos = [];
+var filteredMedicos = [];
+var userLat = null, userLng = null;
+var activeRadius = 5; // km default
+var currentSlug = null;
+var videoMap = {}; // slug -> {type:'yt'|'local', src}
+var mapView = null, markerLayerGroup = null, circleLayer = null;
+var cardMarkers = {};
+var currentView = 'map';
+var gridView = 'grid';
+var espFilterDir = '';
+
+// ══ INIT ══
+window.addEventListener("DOMContentLoaded", function(){
+  applyTheme();
+  initMap();
+  loadMedicos();
+});
+
+function applyTheme(){
+  var theme = (localStorage.getItem("sp_dir_theme")||"dark");
+  document.documentElement.setAttribute("data-theme", theme);
+}
+function toggleTheme(){
+  var cur = document.documentElement.getAttribute("data-theme");
+  var next = cur === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("sp_dir_theme", next);
+}
+
+// ══ MAP ══
+function initMap(){
+  mapView = L.map("map", {zoomControl:true, attributionControl:false}).setView([19.4326,-99.1332],12);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19}).addTo(mapView);
+  markerLayerGroup = L.layerGroup().addTo(mapView);
+  setTimeout(function(){ mapView.invalidateSize(); }, 300);
+}
+
+// ══ LOAD MEDICOS ══
+async function loadMedicos(){
+  // Intenta desde backend, usa mock si falla
+  try {
+    var fd = new FormData();
+    fd.append("action","directorioPublico");
+    var r = await fetch(SCRIPT_URL,{method:"POST",body:fd,signal:AbortSignal.timeout(5000)}).then(function(res){ return res.json(); });
+    if(r.ok && r.data && r.data.length){
+      allMedicos = r.data.filter(function(m){ return (m.cfg||{}).en_directorio; });
+    } else { allMedicos = MOCK_MEDICOS; }
+  } catch(e){
+    allMedicos = MOCK_MEDICOS;
+  }
+  // Cargar videos guardados
+  try { videoMap = JSON.parse(localStorage.getItem("sp_dir_videos")||"{}"); } catch(e){ videoMap = {}; }
+  buildEspFilters();
+  onSearch();
+}
+
+// ══ DISTANCIA Haversine ══
+function haversine(lat1,lng1,lat2,lng2){
+  var R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// ══ GEOLOCALIZAR ══
+function geolocate(){
+  if(!navigator.geolocation){ toast("Geolocalización no disponible","err"); return; }
+  toast("📍 Obteniendo ubicación…");
+  navigator.geolocation.getCurrentPosition(function(pos){
+    userLat = pos.coords.latitude;
+    userLng = pos.coords.longitude;
+    toast("✅ Ubicación obtenida","ok");
+    onSearch();
+    if(mapView) mapView.setView([userLat,userLng],13);
+    drawCircle();
+  }, function(){ toast("❌ No se pudo obtener la ubicación","err"); },{timeout:8000});
+}
+
+// ══ RADIO ══
+function setRadius(km,btn){
+  document.querySelectorAll(".radius-chip").forEach(function(b){ b.classList.remove("sel"); });
+  btn.classList.add("sel");
+  activeRadius = km;
+  var ri = document.getElementById("range-info");
+  var rv = document.getElementById("range-val");
+  if(km===0){ ri.style.display="none"; }
+  else { ri.style.display="block"; rv.textContent=km+" km"; }
+  drawCircle();
+  onSearch();
+}
+
+function drawCircle(){
+  if(circleLayer){ mapView.removeLayer(circleLayer); circleLayer=null; }
+  if(!userLat||!userLng||activeRadius===0) return;
+  circleLayer = L.circle([userLat,userLng],{
+    radius:activeRadius*1000,
+    color:'rgba(0,212,255,.6)',weight:2,
+    fillColor:'rgba(0,212,255,.06)',fillOpacity:1,
+    dashArray:'6 4'
+  }).addTo(mapView);
+}
+
+// ══ BÚSQUEDA Y FILTRO ══
+function onSearch(){
+  var q = (document.getElementById("search-input").value||"").toLowerCase().trim();
+  var esp = document.getElementById("esp-filter").value;
+
+  filteredMedicos = allMedicos.filter(function(m){
+    var cfg = m.cfg||{};
+    var name = (cfg.nombre_com||m.nombre_legal||"").toLowerCase();
+    var esTxt = (cfg.especialidad_txt||"").toLowerCase();
+    var ciudad = (cfg.directoryCity||"").toLowerCase();
+    var matchQ = !q || name.includes(q)||esTxt.includes(q)||ciudad.includes(q);
+    var matchEsp = !esp || (m.plan===esp||(cfg.especialidad_txt||"").toLowerCase().includes(esp.toLowerCase())||(m.slug||"").includes(esp));
+    return matchQ && matchEsp;
+  });
+
+  // Distancias
+  filteredMedicos.forEach(function(m){
+    var cfg = m.cfg||{};
+    var lat = parseFloat(cfg.locationLat), lng = parseFloat(cfg.locationLng);
+    if(userLat && !isNaN(lat) && !isNaN(lng)){
+      m._dist = haversine(userLat,userLng,lat,lng);
+    } else { m._dist = null; }
+    // Dentro de rango?
+    if(activeRadius>0 && m._dist!==null){ m._inRange = m._dist<=activeRadius; }
+    else { m._inRange = true; }
+  });
+
+  sortAndRender();
+  updateStats();
+}
+
+function sortAndRender(){
+  var sort = document.getElementById("sort-sel").value;
+  filteredMedicos.sort(function(a,b){
+    if(sort==="dist"){
+      if(a._dist===null && b._dist===null) return 0;
+      if(a._dist===null) return 1; if(b._dist===null) return -1;
+      return a._dist-b._dist;
+    }
+    if(sort==="name") return (a.cfg.nombre_com||a.nombre_legal).localeCompare(b.cfg.nombre_com||b.nombre_legal);
+    if(sort==="esp") return (a.cfg.especialidad_txt||"").localeCompare(b.cfg.especialidad_txt||"");
+    return 0;
+  });
+  renderList();
+  renderMap();
+  renderDir();
+}
+
+// ══ RENDER LIST ══
+function renderList(){
+  var el = document.getElementById("list-items");
+  var vis = filteredMedicos.filter(function(m){ return m._inRange; });
+  document.getElementById("count-vis").textContent = vis.length;
+  document.getElementById("count-total").textContent = allMedicos.length;
+
+  if(!filteredMedicos.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Sin resultados</div><div class="empty-sub">Prueba con otros términos o amplía el radio</div></div>';
+    return;
+  }
+  el.innerHTML = filteredMedicos.map(function(m){ return buildListCard(m); }).join("");
+}
+
+function buildListCard(m){
+  var cfg = m.cfg||{};
+  var name = cfg.nombre_com||m.nombre_legal||"—";
+  var esp = cfg.especialidad_txt||"General";
+  var addr = cfg.direccion||cfg.directoryCity||"";
+  var initials = name.replace(/Dr\.|Dra\.|Lic\.|Fis\./g,"").trim().split(" ").slice(0,2).map(function(w){ return w[0]||""; }).join("").toUpperCase();
+  var distTxt = m._dist!==null ? (m._dist<1?(m._dist*1000).toFixed(0)+" m":m._dist.toFixed(1)+" km") : "—";
+  var inRange = m._inRange;
+  var tags = (cfg.tags||[]).slice(0,3);
+  var logo = cfg.logo||"";
+  return '<div class="doc-card'+(inRange?"":" out-of-range")+'" id="lc-'+m.slug+'" onclick="focusMarker(\''+m.slug+'\')">'
+    +'<div class="dc-top">'
+    +'<div class="dc-avatar">'+(logo?'<img src="'+logo+'" alt=""/>':(initials||"?"))+'</div>'
+    +'<div class="dc-info">'
+    +'<div class="dc-name">'+esc(name)+'</div>'
+    +'<div class="dc-esp">'+esc(esp)+'</div>'
+    +'<div class="dc-dist'+(inRange?"":" far")+'">'
+    +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>'
+    +esc(distTxt)+'</div></div></div>'
+    +(tags.length?'<div class="dc-tags">'+tags.map(function(t){ return '<span class="dc-tag">'+esc(t)+'</span>'; }).join("")+'</div>':"")
+    +'<div class="dc-footer"><div class="dc-addr">'+esc(addr)+'</div>'
+    +'<div class="dc-actions">'
+    +(cfg.whatsapp?'<button class="dc-act wa" onclick="event.stopPropagation();openWA(\''+cfg.whatsapp+'\')">💬</button>':"")
+    +'<button class="dc-act" onclick="event.stopPropagation();openVideoModal(\''+m.slug+'\')">▶</button>'
+    +'</div></div></div>';
+}
+
+// ══ RENDER MAP ══
+function renderMap(){
+  markerLayerGroup.clearLayers();
+  cardMarkers = {};
+  filteredMedicos.forEach(function(m){
+    var cfg = m.cfg||{};
+    var lat = parseFloat(cfg.locationLat), lng = parseFloat(cfg.locationLng);
+    if(isNaN(lat)||isNaN(lng)) return;
+    var logo = cfg.logo||"";
+    var name = cfg.nombre_com||m.nombre_legal||"";
+    var initials = name.replace(/Dr\.|Dra\.|Lic\.|Fis\./g,"").trim().split(" ").slice(0,2).map(function(w){ return w[0]||""; }).join("").toUpperCase();
+    var inRange = m._inRange;
+    var pinHtml = '<div class="pin-wrap">'
+      +'<div class="pin-bubble'+(inRange?"":" out")+'">'
+      +(logo?'<img src="'+logo+'" alt=""/>': '<span style="font-size:14px;font-weight:800;color:'+(inRange?"#000":"#555")+'">'+initials+'</span>')
+      +'</div>'
+      +'<div class="pin-tail'+(inRange?"":" out")+'"></div>'
+      +'<div class="pin-dot'+(inRange?"":" out")+'"></div>'
+      +'</div>';
+    var icon = L.divIcon({html:pinHtml, className:"", iconSize:[44,58], iconAnchor:[22,58], popupAnchor:[0,-60]});
+    var marker = L.marker([lat,lng],{icon:icon}).addTo(markerLayerGroup);
+    marker.bindPopup(buildPopup(m), {maxWidth:260, className:"custom-popup"});
+    marker.on("click",function(){ highlightCard(m.slug); });
+    cardMarkers[m.slug] = marker;
+  });
+}
+
+function buildPopup(m){
+  var cfg = m.cfg||{};
+  var name = cfg.nombre_com||m.nombre_legal||"—";
+  var esp = cfg.especialidad_txt||"General";
+  var logo = cfg.logo||"";
+  var initials = name.replace(/Dr\.|Dra\.|Lic\.|Fis\./g,"").trim().split(" ").slice(0,2).map(function(w){ return w[0]||""; }).join("").toUpperCase();
+  var distTxt = m._dist!==null ? (m._dist<1?(m._dist*1000).toFixed(0)+" m":m._dist.toFixed(1)+" km"):"—";
+  return '<div class="popup-inner">'
+    +'<div class="popup-head">'
+    +'<div class="popup-av">'+(logo?'<img src="'+logo+'"/>':(initials||"?"))+'</div>'
+    +'<div><div class="popup-name">'+esc(name)+'</div><div class="popup-esp">'+esc(esp)+'</div></div>'
+    +'</div>'
+    +'<div class="popup-info">📍 '+esc(cfg.direccion||cfg.directoryCity||"—")+'<br>'
+    +'🕐 '+esc(cfg.horario||"—")+'<br>'
+    +(m._dist!==null?'📏 '+distTxt+' de tu ubicación':'')
+    +'</div>'
+    +'<div class="popup-btns">'
+    +'<button class="popup-btn main" onclick="openVideoModal(\''+m.slug+'\')">▶ Video</button>'
+    +(cfg.whatsapp?'<button class="popup-btn sec" onclick="openWA(\''+cfg.whatsapp+'\')">💬 WA</button>':"")
+    +'</div></div>';
+}
+
+function focusMarker(slug){
+  var mk = cardMarkers[slug];
+  if(mk){ mk.openPopup(); mapView.panTo(mk.getLatLng()); }
+  highlightCard(slug);
+}
+function highlightCard(slug){
+  document.querySelectorAll(".doc-card").forEach(function(c){ c.classList.remove("active"); });
+  var el = document.getElementById("lc-"+slug);
+  if(el){ el.classList.add("active"); el.scrollIntoView({behavior:"smooth",block:"nearest"}); }
+}
+
+// ══ RENDER DIRECTORIO ══
+function renderDir(){
+  var el = document.getElementById("dir-grid");
+  var vis = filteredMedicos.filter(function(m){ return m._inRange; });
+  if(!vis.length){
+    el.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">Sin consultorios en este rango</div><div class="empty-sub">Amplía el radio o elimina los filtros</div></div>';
+    return;
+  }
+  el.innerHTML = vis.map(function(m){ return buildDirCard(m); }).join("");
+}
+
+function buildDirCard(m){
+  var cfg = m.cfg||{};
+  var name = cfg.nombre_com||m.nombre_legal||"—";
+  var esp = cfg.especialidad_txt||"General";
+  var logo = cfg.logo||"";
+  var initials = name.replace(/Dr\.|Dra\.|Lic\.|Fis\./g,"").trim().split(" ").slice(0,2).map(function(w){ return w[0]||""; }).join("").toUpperCase();
+  var tags = (cfg.tags||[]).slice(0,4);
+  var stars = cfg.stars||4.5;
+  var reviews = cfg.reviews||0;
+  var distTxt = m._dist!==null ? (m._dist<1?(m._dist*1000).toFixed(0)+" m":m._dist.toFixed(1)+" km"):"—";
+  var plan = m.plan||"basico";
+  var planLbl = {profesional:"PRO",basico:"BÁSICO",trial:"TRIAL",enterprise:"ENTERPRISE"}[plan]||plan.toUpperCase();
+  var vid = videoMap[m.slug]||{};
+  var hasVid = vid.type==="yt"?(vid.src&&vid.src.length>0):cfg.video_yt&&cfg.video_yt.length>0;
+  var ytId = vid.type==="yt"?vid.src:(cfg.video_yt||"");
+  var ytSafe = ytId?extractYtId(ytId):"";
+
+  return '<div class="dir-card">'
+    // Plan badge
+    +'<div class="plan-badge '+plan+'">'+planLbl+'</div>'
+    // Header
+    +'<div class="dc-header">'
+    +'<div class="dir-avatar">'+(logo?'<img src="'+esc(logo)+'" alt=""/>':initials||"?")+'</div>'
+    +'<div class="dir-meta">'
+    +'<div class="dir-name">'+esc(name)+'</div>'
+    +'<div class="dir-esp">'+esc(esp)+'</div>'
+    +'<div class="dir-star">'+starStr(stars)+' <span style="color:var(--txt3)">'+stars.toFixed(1)+' ('+reviews+')</span></div>'
+    +'</div></div>'
+    // Body
+    +'<div class="dir-body">'
+    +(cfg.descripcion?'<div class="dir-desc">'+esc(cfg.descripcion)+'</div>':"")
+    // Video embed
+    +'<div class="dir-video" style="cursor:pointer" onclick="openVideoModal(\''+m.slug+'\')">'
+    +(ytSafe
+      ?'<div class="vid-placeholder">'
+        +'<div class="vid-play">▶</div>'
+        +'<div class="vid-label">Ver presentación</div>'
+      +'</div>'
+      :'<div class="vid-placeholder">'
+        +'<div class="vid-play" style="background:var(--surface3);color:var(--txt3)">▶</div>'
+        +'<div class="vid-label" style="color:var(--txt3)">Agregar video</div>'
+      +'</div>'
+    )
+    +'</div>'
+    // Tags
+    +(tags.length?'<div class="dir-chips">'+tags.map(function(t){ return '<span class="dir-chip">'+esc(t)+'</span>'; }).join("")+'</div>':"")
+    // Ubicación
+    +'<div class="dir-loc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>'+esc(cfg.directoryCity||cfg.direccion||"—")+'</div>'
+    +(m._dist!==null?'<div class="dir-loc" style="color:var(--green)">📏 '+distTxt+' de ti</div>':"")
+    +'<div class="dir-loc">🕐 '+esc(cfg.horario||"—")+'</div>'
+    +'</div>'
+    // Footer
+    +'<div class="dir-footer">'
+    +'<button class="dir-btn main" onclick="openVideoModal(\''+m.slug+'\')">▶ Video</button>'
+    +(cfg.whatsapp?'<button class="dir-btn wa" onclick="openWA(\''+cfg.whatsapp+'\')">💬 WhatsApp</button>':"")
+    +'<button class="dir-btn ghost" onclick="focusOnMap(\''+m.slug+'\')">🗺️ Ver mapa</button>'
+    +'</div></div>';
+}
+
+function starStr(n){
+  var s="";
+  for(var i=1;i<=5;i++) s+=(i<=Math.round(n)?"★":"☆");
+  return s;
+}
+
+function focusOnMap(slug){
+  switchView("map");
+  setTimeout(function(){ focusMarker(slug); },300);
+}
+
+// ══ VIDEO MODAL ══
+var currentModalSlug = null;
+function openVideoModal(slug){
+  currentModalSlug = slug;
+  var m = allMedicos.find(function(x){ return x.slug===slug; });
+  if(!m) return;
+  var cfg = m.cfg||{};
+  var name = cfg.nombre_com||m.nombre_legal||"—";
+  document.getElementById("modal-title").textContent = "Video — "+name;
+  renderModalVideo(slug, cfg);
+  document.getElementById("video-modal").classList.add("on");
+}
+function renderModalVideo(slug, cfg){
+  var vid = videoMap[slug]||{};
+  var ytId = vid.type==="yt"?vid.src:(cfg.video_yt||"");
+  var ytSafe = ytId ? extractYtId(ytId):"";
+  var el = document.getElementById("modal-vid");
+  if(vid.type==="local"&&vid.src){
+    el.innerHTML='<video src="'+vid.src+'" controls style="width:100%;height:100%"></video>';
+  } else if(ytSafe){
+    el.innerHTML='<iframe src="https://www.youtube.com/embed/'+ytSafe+'?autoplay=0&rel=0" frameborder="0" allow="autoplay;encrypted-media" allowfullscreen style="width:100%;height:100%"></iframe>';
+  } else {
+    el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--txt3);font-size:14px;flex-direction:column;gap:8px"><div style="font-size:36px">🎬</div><div>Sin video configurado</div><div style="font-size:12px">Usa el editor de abajo para agregar uno</div></div>';
+  }
+}
+function closeVideoModal(e){ if(e.target===document.getElementById("video-modal")) closeVideoModalBtn(); }
+function closeVideoModalBtn(){
+  document.getElementById("video-modal").classList.remove("on");
+  document.getElementById("modal-vid").innerHTML="";
+  currentModalSlug=null;
+}
+
+// ══ VIDEO EDITOR ══
+function setVeTab(tab,btn){
+  document.querySelectorAll(".ve-tab").forEach(function(b){ b.classList.remove("sel"); });
+  btn.classList.add("sel");
+  document.getElementById("ve-yt").classList.toggle("on", tab==="yt");
+  document.getElementById("ve-local").classList.toggle("on", tab==="local");
+}
+function applyYtVideo(){
+  if(!currentModalSlug){ toast("No hay consultorio seleccionado","err"); return; }
+  var val = document.getElementById("yt-url-input").value.trim();
+  if(!val){ toast("Ingresa una URL de YouTube","err"); return; }
+  var id = extractYtId(val);
+  if(!id){ toast("URL de YouTube no válida","err"); return; }
+  videoMap[currentModalSlug] = {type:"yt",src:id};
+  saveVideoMap();
+  var m = allMedicos.find(function(x){ return x.slug===currentModalSlug; });
+  renderModalVideo(currentModalSlug, (m&&m.cfg)||{});
+  toast("✅ Video de YouTube aplicado","ok");
+}
+function applyLocalVideo(e){
+  if(!currentModalSlug){ toast("No hay consultorio seleccionado","err"); return; }
+  var file = e.target.files[0];
+  if(!file){ return; }
+  if(file.size > 200*1024*1024){ toast("El video supera 200 MB","err"); return; }
+  var url = URL.createObjectURL(file);
+  videoMap[currentModalSlug] = {type:"local",src:url};
+  // No guardar en localStorage (objeto URL es temporal)
+  var m = allMedicos.find(function(x){ return x.slug===currentModalSlug; });
+  renderModalVideo(currentModalSlug, (m&&m.cfg)||{});
+  toast("✅ Video local cargado","ok");
+}
+function saveVideoMap(){
+  try{
+    var toSave = {};
+    Object.keys(videoMap).forEach(function(k){ if(videoMap[k].type==="yt") toSave[k]=videoMap[k]; });
+    localStorage.setItem("sp_dir_videos", JSON.stringify(toSave));
+  } catch(e){}
+}
+function extractYtId(url){
+  if(!url) return "";
+  var m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/);
+  if(m) return m[1];
+  if(/^[A-Za-z0-9_-]{11}$/.test(url)) return url;
+  return "";
+}
+
+// ══ STATS ══
+function updateStats(){
+  var total = allMedicos.length;
+  var cerca = filteredMedicos.filter(function(m){ return m._inRange; }).length;
+  var esps = new Set(allMedicos.map(function(m){ return m.cfg.especialidad_txt||""; })).size;
+  var ciudades = new Set(allMedicos.map(function(m){ return m.cfg.directoryCity||""; })).size;
+  document.getElementById("stat-total").textContent=total;
+  document.getElementById("stat-cerca").textContent=cerca;
+  document.getElementById("stat-esp").textContent=esps;
+  document.getElementById("stat-ciudades").textContent=ciudades;
+}
+
+// ══ ESP FILTERS DIR ══
+function buildEspFilters(){
+  var esps = [...new Set(allMedicos.map(function(m){ return m.cfg.especialidad_txt||""; }).filter(Boolean))];
+  var el = document.getElementById("esp-filters-dir");
+  esps.forEach(function(e){
+    var btn = document.createElement("button");
+    btn.className="ef-chip"; btn.dataset.esp=e; btn.textContent=e;
+    btn.onclick=function(){ filterDir(e); };
+    el.appendChild(btn);
+  });
+}
+function filterDir(esp){
+  espFilterDir = esp;
+  document.querySelectorAll(".ef-chip").forEach(function(b){
+    b.classList.toggle("sel", b.dataset.esp===esp);
+  });
+  if(esp){
+    filteredMedicos = allMedicos.filter(function(m){ return (m.cfg.especialidad_txt||"")==esp && m._inRange; });
+  } else {
+    filteredMedicos = allMedicos.filter(function(m){ return m._inRange; });
+  }
+  renderDir();
+}
+
+// ══ SWITCH VIEW ══
+function switchView(v){
+  currentView = v;
+  document.getElementById("map-view").style.display = v==="map"?"grid":"none";
+  document.getElementById("dir-view").style.display = v==="dir"?"block":"none";
+  document.getElementById("btn-view-map").classList.toggle("active",v==="map");
+  document.getElementById("btn-view-dir").classList.toggle("active",v==="dir");
+  if(v==="map") setTimeout(function(){ mapView&&mapView.invalidateSize(); },100);
+}
+
+function setGridView(gv){
+  gridView = gv;
+  document.getElementById("dir-grid").className="dir-grid"+(gv==="list"?" list-view":"");
+  document.getElementById("vt-grid").classList.toggle("sel",gv==="grid");
+  document.getElementById("vt-list").classList.toggle("sel",gv==="list");
+}
+
+// ══ UTIL ══
+function openWA(num){ window.open("https://wa.me/52"+num.replace(/\D/g,""),"_blank"); }
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+var _tt; function toast(msg,type){ var t=document.getElementById("toast"); t.textContent=msg; t.className="on "+(type||""); clearTimeout(_tt); _tt=setTimeout(function(){ t.classList.remove("on"); },3200); }
+</script>
+</body>
+</html>
