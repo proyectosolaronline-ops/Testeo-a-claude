@@ -1,46 +1,52 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ver Video</title>
+    <title>Visualizador</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #000; color: #fff; display: flex; flex-direction: column; align-items: center; height: 100vh; }
-        .nav-header { width: 100%; padding: 15px; background: rgba(255,255,255,0.1); text-align: center; }
-        .btn-back { background: #007bff; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; border: none; }
-        .video-container { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
-        video { width: 95%; max-height: 70vh; border-radius: 10px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
-        #t { margin-top: 20px; font-size: 14px; color: #aaa; }
+        body { font-family: sans-serif; margin: 0; background: #000; color: #fff; display: flex; flex-direction: column; height: 100vh; }
+        .header { padding: 15px; text-align: center; background: #111; }
+        .btn-back { background: #555; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; border: none; font-size: 14px; }
+        .video-box { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
+        video { width: 100%; border-radius: 15px; background: #111; max-height: 80vh; }
+        #status { text-align: center; color: #888; font-size: 12px; padding: 10px; }
     </style>
 </head>
 <body onload="v()">
-    <div class="nav-header">
-        <button class="btn-back" onclick="window.location.href='index.html'">⬅️ VOLVER A GRABAR</button>
+    <div class="header">
+        <button class="btn-back" onclick="window.location.href='index.html'">⬅️ REGRESAR A CÁMARA</button>
     </div>
 
-    <p id="t">Buscando video...</p>
-    
-    <div class="video-container">
-        <video id="p" controls playsinline></video>
+    <div id="status">Conectando con el servidor...</div>
+
+    <div class="video-box">
+        <video id="p" controls playsinline muted autoplay></video>
     </div>
 
     <script>
         async function v(){
           try {
-              const r = await fetch("https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec");
-              const d = await r.json();
-              if(d.url){
-                const p = document.getElementById('p');
-                p.src = d.url;
-                p.muted = true;
-                p.onloadedmetadata = () => p.currentTime = 0.1;
-                p.load();
-                document.getElementById('t').innerText = "Reproduciendo último video guardado";
+              const res = await fetch("https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec");
+              const data = await res.json();
+              const player = document.getElementById('p');
+              
+              if(data.url){
+                player.src = data.url;
+                document.getElementById('status').innerText = "Video cargado correctamente";
+                
+                // Forzado manual para móviles
+                player.load();
+                player.onloadedmetadata = () => {
+                    player.currentTime = 0.1;
+                    player.play().catch(e => console.log("Auto-play bloqueado, requiere click"));
+                };
               } else {
-                document.getElementById('t').innerText = "No hay videos en la base de datos";
+                document.getElementById('status').innerText = "No se encontró video en el Sheet";
               }
           } catch(e) {
-              document.getElementById('t').innerText = "Error al conectar con el servidor";
+              document.getElementById('status').innerText = "Error: Verifica tu conexión a internet";
           }
         }
     </script>
