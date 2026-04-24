@@ -8,6 +8,7 @@
       const d = await r.json();
       if(d.url){
         const p = document.getElementById('p');
+        const API_URL = "https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec";
         p.src = d.url;
         p.muted = true;
         p.onloadedmetadata = () => p.currentTime = 0.1;
