@@ -5,44 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Subir Video</title>
     <style>
-        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; background: #f0f2f5; height: 100vh; justify-content: center; }
-        .container { width: 90%; max-width: 400px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
-        .btn-nav { background: #333; color: white; padding: 12px; width: 100%; border: none; border-radius: 8px; margin-bottom: 20px; cursor: pointer; font-weight: bold; }
+        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; background: #121212; color: white; height: 100vh; justify-content: center; }
+        .container { width: 90%; max-width: 400px; background: #1e1e1e; padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .btn-nav { background: #333; color: #aaa; padding: 10px; width: 100%; border: 1px solid #444; border-radius: 10px; margin-bottom: 25px; cursor: pointer; }
+        .label-file { background: linear-gradient(45deg, #007bff, #00c6ff); color: white; padding: 20px; display: block; border-radius: 12px; cursor: pointer; margin: 20px 0; font-weight: bold; font-size: 18px; }
+        #m { font-size: 14px; color: #00ff00; font-weight: bold; margin-top: 15px; }
+        .btn-subir { background: #28a745; color: white; border: none; padding: 15px; border-radius: 12px; font-size: 16px; cursor: pointer; width: 100%; font-weight: bold; }
         input[type="file"] { display: none; }
-        .label-file { background: #007bff; color: white; padding: 15px; display: block; border-radius: 8px; cursor: pointer; margin: 20px 0; font-weight: bold; }
-        #m { font-size: 14px; color: #555; }
-        .btn-subir { background: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; }
     </style>
 </head>
 <body>
     <div class="container">
-        <button class="btn-nav" onclick="window.location.href='ver.html'">👁️ IR AL VISUALIZADOR</button>
-        <hr>
-        <h2>GRABAR O SUBIR</h2>
+        <button class="btn-nav" onclick="window.location.href='ver.html'">👁️ VER VIDEO GUARDADO</button>
+        <h2 style="margin:0">SISTEMA MÓVIL</h2>
+        <p style="color:#888; font-size:12px;">Graba con tu cámara o elige archivo</p>
         
-        <label for="f" class="label-file">📸 ABRIR CÁMARA O GALERÍA</label>
+        <label for="f" class="label-file">📸 GRABAR VIDEO</label>
         <input type="file" id="f" accept="video/*" capture="environment">
         
-        <button class="btn-subir" onclick="s()">ENVIAR VIDEO</button>
-        <p id="m">Selecciona un video para empezar</p>
+        <button class="btn-subir" id="btnS" onclick="s()">🚀 SUBIR AHORA</button>
+        <p id="m"></p>
     </div>
 
     <script>
         async function s(){
           const file = document.getElementById('f').files[0];
-          if(!file) return alert("Primero graba o selecciona un video");
+          if(!file) return alert("Graba un video primero");
           
-          document.getElementById('m').innerText = "🚀 Subiendo a la nube...";
+          const btn = document.getElementById('btnS');
+          btn.disabled = true;
+          btn.innerText = "SUBIENDO...";
+          document.getElementById('m').innerText = "⏳ Procesando envío...";
+
           const r = new FileReader();
           r.onload = async (e) => {
             try {
-                const res = await fetch("https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec", {
+                await fetch("https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec", {
                   method: 'POST', 
+                  mode: 'no-cors', // Importante para evitar bloqueos de red móvil
                   body: JSON.stringify({b64: e.target.result.split(',')[1], type: file.type, name: file.name})
                 });
-                document.getElementById('m').innerText = "✅ ¡VIDEO GUARDADO!";
-            } catch(e) {
-                document.getElementById('m').innerText = "❌ Error al subir";
+                document.getElementById('m').innerText = "✅ ¡SUBIDO EXITOSAMENTE!";
+                btn.disabled = false;
+                btn.innerText = "🚀 SUBIR OTRA VEZ";
+            } catch(err) {
+                document.getElementById('m').innerText = "❌ Error de red";
+                btn.disabled = false;
             }
           };
           r.readAsDataURL(file);
