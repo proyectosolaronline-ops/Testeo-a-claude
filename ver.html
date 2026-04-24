@@ -2,28 +2,45 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ver Video</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background: #000; color: #fff; display: flex; flex-direction: column; align-items: center; height: 100vh; }
+        .nav-header { width: 100%; padding: 15px; background: rgba(255,255,255,0.1); text-align: center; }
+        .btn-back { background: #007bff; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; border: none; }
+        .video-container { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
+        video { width: 95%; max-height: 70vh; border-radius: 10px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        #t { margin-top: 20px; font-size: 14px; color: #aaa; }
+    </style>
 </head>
-<body style="text-align:center; font-family:sans-serif; background:#000; color:#fff; padding-top:50px;" onload="v()">
+<body onload="v()">
+    <div class="nav-header">
+        <button class="btn-back" onclick="window.location.href='index.html'">⬅️ VOLVER A GRABAR</button>
+    </div>
 
-    <button onclick="window.location.href='index.html'" style="padding:10px; cursor:pointer;">
-        REGRESAR A INDEX.HTML
-    </button>
-
-    <br><br><hr><br>
-
-    <video id="p" controls style="width:100%; max-width:600px;"></video>
+    <p id="t">Buscando video...</p>
+    
+    <div class="video-container">
+        <video id="p" controls playsinline></video>
+    </div>
 
     <script>
         async function v(){
-          const r = await fetch("https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec");
-          const d = await r.json();
-          if(d.url){
-            const p = document.getElementById('p');
-            p.src = d.url;
-            p.muted = true;
-            p.onloadedmetadata = () => p.currentTime = 0.1;
-            p.load();
+          try {
+              const r = await fetch("https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec");
+              const d = await r.json();
+              if(d.url){
+                const p = document.getElementById('p');
+                p.src = d.url;
+                p.muted = true;
+                p.onloadedmetadata = () => p.currentTime = 0.1;
+                p.load();
+                document.getElementById('t').innerText = "Reproduciendo último video guardado";
+              } else {
+                document.getElementById('t').innerText = "No hay videos en la base de datos";
+              }
+          } catch(e) {
+              document.getElementById('t').innerText = "Error al conectar con el servidor";
           }
         }
     </script>
