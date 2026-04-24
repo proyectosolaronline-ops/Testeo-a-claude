@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cámara Ver.02</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background: #121212; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        .card { background: #1e1e1e; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .nav-btn { background: #333; color: #fff; padding: 12px; border: none; border-radius: 10px; width: 100%; margin-bottom: 25px; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+        .camera-label { background: linear-gradient(45deg, #007bff, #00c6ff); color: white; padding: 20px; display: block; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 18px; margin-bottom: 20px; }
+        #f { display: none; }
+        #m { color: #00ff00; font-weight: bold; min-height: 20px; }
+        .send-btn { background: #28a745; color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .send-btn:disabled { background: #444; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <button class="nav-btn" onclick="window.location.href='ver.html'">👁️ Ver último video</button>
+        <h2 style="margin-bottom: 10px;">CÁMARA ver.02</h2>
+        
+        <label for="f" class="camera-label">📸 GRABAR / SELECCIONAR</label>
+        <input type="file" id="f" accept="video/*" capture="environment">
+        
+        <button id="sBtn" class="send-btn" onclick="subir()">🚀 ENVIAR AHORA</button>
+        <p id="m"></p>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec";
+
+        async function subir(){
+            const file = document.getElementById('f').files[0];
+            if(!file) return alert("Graba algo primero");
+            
+            const btn = document.getElementById('sBtn');
+            const msg = document.getElementById('m');
+            
+            btn.disabled = true;
+            msg.style.color = '#00ff00';
+            msg.innerText = "⏳ Subiendo...";
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const b64 = e.target.result.split(',')[1];
+                try {
+                    await fetch(SCRIPT_URL, {
+                        method: "POST",
+                        body: JSON.stringify({ b64: b64, type: file.type, name: file.name })
+                    });
+                    msg.innerText = "✅ ¡GUARDADO!";
+                    document.getElementById('f').value = '';
+                } catch(err) {
+                    msg.style.color = '#ff0000';
+                    msg.innerText = "❌ Error";
+                } finally {
+                    btn.disabled = false;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>
