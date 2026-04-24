@@ -18,7 +18,7 @@
 <body>
     <div class="card">
         <button class="nav-btn" onclick="window.location.href='ver.html'">👁️ Ver último video</button>
-        <h2 style="margin-bottom: 10px;">CÁMARA ver.01</h2>
+        <h2 style="margin-bottom: 10px;">CÁMARA ver.02</h2>
         
         <label for="f" class="camera-label">📸 GRABAR / SELECCIONAR Ver.01</label>
         <input type="file" id="f" accept="video/*" capture="environment">
@@ -56,6 +56,12 @@
             };
             reader.readAsDataURL(file);
         }
+        <div style="padding: 10px;">
+  <button onclick="window.location.href='ver.html'" 
+          style="width: 100%; padding: 15px; background: #333; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">
+    👁️ VER VIDEO GUARDADO
+  </button>
+</div>
     </script>
 </body>
     // ''''''' ver1
