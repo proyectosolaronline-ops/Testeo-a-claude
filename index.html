@@ -1,0 +1,24 @@
+<body style="text-align:center;font-family:sans-serif">
+  <h2>SUBIR VIDEO</h2>
+  <input type="file" id="f" accept="video/*">
+  <button onclick="s()">SUBIR</button>
+  <p id="m"></p>
+  <a href="ver.html">IR A VER VIDEO</a>
+
+  <script>
+    async function s(){
+      const file = document.getElementById('f').files[0];
+      if(!file) return;
+      document.getElementById('m').innerText = "Subiendo...";
+      const r = new FileReader();
+      r.onload = async (e) => {
+        const res = await fetch("URL_ACA", {
+          method: 'POST', 
+          body: JSON.stringify({b64: e.target.result.split(',')[1], type: file.type, name: file.name})
+        });
+        document.getElementById('m').innerText = "¡LISTO!";
+      };
+      r.readAsDataURL(file);
+    }
+  </script>
+</body>
