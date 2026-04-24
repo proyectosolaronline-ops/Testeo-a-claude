@@ -1,24 +1,31 @@
-<body style="text-align:center;background:#000;color:#fff" onload="v()">
-  <a href="subir.html" style="color:#fff">SUBIR OTRO</a><br>
-  <video id="p" controls style="width:100%;max-width:600px;margin-top:20px"></video>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ver Video</title>
+</head>
+<body style="text-align:center; font-family:sans-serif; background:#000; color:#fff; padding-top:50px;" onload="v()">
 
-  <script>
-    async function v(){
-      const r = await fetch("URL_ACA");
-      const d = await r.json();
-      if(d.url){
-        const p = document.getElementById('p');
-        const API_URL = "https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec";
-        p.src = d.url;
-        p.muted = true;
-        p.onloadedmetadata = () => p.currentTime = 0.1;
-        p.load();
-      }
-    }
-    <div style="margin-bottom: 20px;">
-  <button onclick="window.location.href='index.html'" style="padding: 10px 20px; cursor: pointer; background: #007bff; color: #fff; border: none; border-radius: 5px;">
-    ⬅️ Regresar a Subir Video
-  </button>
-</div>
-  </script>
+    <button onclick="window.location.href='index.html'" style="padding:10px; cursor:pointer;">
+        REGRESAR A INDEX.HTML
+    </button>
+
+    <br><br><hr><br>
+
+    <video id="p" controls style="width:100%; max-width:600px;"></video>
+
+    <script>
+        async function v(){
+          const r = await fetch("https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec");
+          const d = await r.json();
+          if(d.url){
+            const p = document.getElementById('p');
+            p.src = d.url;
+            p.muted = true;
+            p.onloadedmetadata = () => p.currentTime = 0.1;
+            p.load();
+          }
+        }
+    </script>
 </body>
+</html>
