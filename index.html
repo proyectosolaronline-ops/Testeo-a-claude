@@ -1,30 +1,37 @@
-<body style="text-align:center;font-family:sans-serif">
-  <h2>SUBIR VIDEO</h2>
-  <input type="file" id="f" accept="video/*">
-  <button onclick="s()">SUBIR</button>
-  <p id="m"></p>
-  <a href="ver.html">IR A VER VIDEO</a>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Subir Video</title>
+</head>
+<body style="text-align:center; font-family:sans-serif; padding-top:50px;">
 
-  <script>
-    async function s(){
-      const file = document.getElementById('f').files[0];
-      if(!file) return;
-      document.getElementById('m').innerText = "Subiendo...";
-      const r = new FileReader();
-      r.onload = async (e) => {
-        const res = await fetch("https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec", {
-          method: 'POST', 
-          body: JSON.stringify({b64: e.target.result.split(',')[1], type: file.type, name: file.name})
-        });
-        document.getElementById('m').innerText = "¡LISTO!";
-      };
-      r.readAsDataURL(file);
-    }
+    <button onclick="window.location.href='ver.html'" style="padding:10px; cursor:pointer;">
+        EJECUTAR VER.HTML
+    </button>
+    
+    <br><br><hr><br>
 
-    <div style="margin-bottom: 20px;">
-  <button onclick="window.location.href='ver.html'" style="padding: 10px 20px; cursor: pointer; background: #666; color: #fff; border: none; border-radius: 5px;">
-    👁️ Ver Video Guardado
-  </button>
-</div>
-  </script>
+    <h2>SUBIR VIDEO</h2>
+    <input type="file" id="f" accept="video/*">
+    <button onclick="s()">SUBIR</button>
+    <p id="m"></p>
+
+    <script>
+        async function s(){
+          const file = document.getElementById('f').files[0];
+          if(!file) return;
+          document.getElementById('m').innerText = "Subiendo...";
+          const r = new FileReader();
+          r.onload = async (e) => {
+            const res = await fetch("https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec", {
+              method: 'POST', 
+              body: JSON.stringify({b64: e.target.result.split(',')[1], type: file.type, name: file.name})
+            });
+            document.getElementById('m').innerText = "¡LISTO!";
+          };
+          r.readAsDataURL(file);
+        }
+    </script>
 </body>
+</html>
