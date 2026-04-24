@@ -5,48 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizador</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #000; color: #fff; display: flex; flex-direction: column; height: 100vh; }
-        .header { padding: 15px; text-align: center; background: #111; }
-        .btn-back { background: #555; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; border: none; font-size: 14px; }
-        .video-box { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
-        video { width: 100%; border-radius: 15px; background: #111; max-height: 80vh; }
-        #status { text-align: center; color: #888; font-size: 12px; padding: 10px; }
+        body { font-family: sans-serif; margin: 0; background: #000; color: #fff; text-align: center; }
+        .header { padding: 20px; background: #111; }
+        .back-btn { background: #555; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; border: none; }
+        .video-container { height: 70vh; display: flex; align-items: center; justify-content: center; padding: 15px; }
+        video { width: 100%; max-width: 600px; border-radius: 15px; background: #111; box-shadow: 0 0 30px rgba(0,123,255,0.3); }
+        #status { color: #888; font-size: 14px; margin-top: 10px; }
     </style>
 </head>
-<body onload="v()">
+<body onload="cargar()">
     <div class="header">
-        <button class="btn-back" onclick="window.location.href='index.html'">⬅️ REGRESAR A CÁMARA</button>
+        <button class="back-btn" onclick="window.location.href='index.html'">⬅️ REGRESAR A CÁMARA</button>
     </div>
 
-    <div id="status">Conectando con el servidor...</div>
+    <p id="status">Buscando video en la matriz...</p>
 
-    <div class="video-box">
-        <video id="p" controls playsinline muted autoplay></video>
+    <div class="video-container">
+        <video id="vid" controls playsinline muted preload="auto" poster="https://via.placeholder.com/600x400/000000/FFFFFF?text=Cargando+Streaming..."></video>
     </div>
+    
+    <p style="font-size: 12px; color: #555;">Si no inicia, toca el video.</p>
 
     <script>
-        async function v(){
-          try {
-              const res = await fetch("https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec");
-              const data = await res.json();
-              const player = document.getElementById('p');
-              
-              if(data.url){
-                player.src = data.url;
-                document.getElementById('status').innerText = "Video cargado correctamente";
+        async function cargar() {
+            const status = document.getElementById('status');
+            const video = document.getElementById('vid');
+            
+            try {
+                const response = await fetch("https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec");
+                const data = await response.json();
                 
-                // Forzado manual para móviles
-                player.load();
-                player.onloadedmetadata = () => {
-                    player.currentTime = 0.1;
-                    player.play().catch(e => console.log("Auto-play bloqueado, requiere click"));
-                };
-              } else {
-                document.getElementById('status').innerText = "No se encontró video en el Sheet";
-              }
-          } catch(e) {
-              document.getElementById('status').innerText = "Error: Verifica tu conexión a internet";
-          }
+                if (data.url) {
+                    status.innerText = "Video encontrado. Cargando...";
+                    
+                    // Fix para que el móvil reconozca el stream de Drive como video/mp4
+                    video.src = data.url;
+                    video.load();
+                    
+                    video.onloadeddata = () => {
+                        status.innerText = "Reproduciendo ahora";
+                        video.currentTime = 0.1; // Fuerza el renderizado del primer frame
+                        video.play().catch(() => {
+                            status.innerText = "Toca el video para reproducir";
+                        });
+                    };
+                } else {
+                    status.innerText = "No hay videos registrados.";
+                }
+            } catch (err) {
+                status.innerText = "Error al conectar con la matriz.";
+            }
         }
     </script>
 </body>
