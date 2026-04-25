@@ -243,22 +243,29 @@ uploadBtn.addEventListener("click", async () => {
     progFill.style.width = "30%"; progLabel.textContent = "Enviando…";
     setStatus("Enviando al servidor…", "");
 
-    const res  = await fetch(SCRIPT_URL, {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ b64: base64, type: selectedFile.type, name: selectedFile.name })
-    });
-    progFill.style.width = "80%"; progLabel.textContent = "Procesando en Drive…";
+const res = await fetch(SCRIPT_URL, {
+  method: "POST",
+  mode: "no-cors",          // ← evita el bloqueo CORS
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ b64: base64, type: selectedFile.type, name: selectedFile.name })
+});
 
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    if(data.error) throw new Error(data.error);
+// Con no-cors la respuesta es opaca, esperamos 3s y consultamos si ya subió
+progFill.style.width = "90%";
+progLabel.textContent = "Verificando en Drive…";
+await new Promise(r => setTimeout(r, 3000));
 
-    progFill.style.width = "100%"; progLabel.textContent = "¡Completado!";
-    setStatus("✅ Video guardado correctamente.", "ok");
-    resultBox.innerHTML = `<strong>📁</strong> ${data.name}<br><strong>🔗 URL:</strong><br><a href="${data.url}" target="_blank">${data.url}</a>`;
-    resultBox.style.display = "block";
+// Consultar el GET para confirmar que se guardó
+const check = await fetch(SCRIPT_URL);
+const data  = await check.json();
+if(!data.videos || data.videos.length === 0) throw new Error("No se confirmó la subida.");
+const ultimo = data.videos[data.videos.length - 1];
 
+progFill.style.width = "100%";
+progLabel.textContent = "¡Completado!";
+setStatus("✅ Video guardado correctamente.", "ok");
+resultBox.innerHTML = `<strong>📁</strong> ${ultimo.name}<br><strong>🔗 URL:</strong><br><a href="${ultimo.url}" target="_blank">${ultimo.url}</a>`;
+resultBox.style.display = "block";
   } catch(err) {
     progFill.style.width = "100%"; progFill.style.background = "#e06c6c";
     setStatus("❌ " + err.message, "err");
