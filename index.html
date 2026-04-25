@@ -1,87 +1,297 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Video Drive App</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Subir Video</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #0f0f0f;
-      color: #e0ddd5;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-    .card {
-      background: #1a1a18;
-      border: 1px solid #2e2e2b;
-      border-radius: 20px;
-      padding: 48px 36px;
-      width: 100%;
-      max-width: 400px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 32px;
-      text-align: center;
-    }
-    .logo { font-size: 48px; }
-    h1 { font-size: 22px; font-weight: 700; color: #f5f4ef; }
-    p { font-size: 14px; color: #7a7870; line-height: 1.6; }
-    .btn-group { display: flex; flex-direction: column; gap: 14px; width: 100%; }
-    .btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-      padding: 16px;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    .btn:active { transform: scale(0.97); }
-    .btn-primary  { background: #1D9E75; color: #fff; }
-    .btn-primary:hover { opacity: 0.88; }
-    .btn-secondary {
-      background: #222220;
-      color: #c2c0b8;
-      border: 1.5px solid #3a3a37;
-    }
-    .btn-secondary:hover { background: #2a2a28; }
-    .divider {
-      width: 100%;
-      height: 1px;
-      background: #2e2e2b;
-    }
-    .footer { font-size: 11px; color: #4a4a47; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f0f0f;color:#e0ddd5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{background:#1a1a18;border:1px solid #2e2e2b;border-radius:16px;padding:32px 28px;width:100%;max-width:480px;display:flex;flex-direction:column;gap:20px}
+    a.back{font-size:13px;color:#7a7870;text-decoration:none}a.back:hover{color:#c2c0b8}
+    h1{font-size:20px;font-weight:600;color:#f5f4ef}
+    p.sub{font-size:13px;color:#7a7870;margin-top:4px}
+    .source-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .source-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:18px 8px;border-radius:12px;border:1.5px solid #3a3a37;background:#222220;cursor:pointer;transition:border-color .2s,background .2s;font-size:13px;color:#9e9c94;text-align:center;line-height:1.3;user-select:none}
+    .source-btn:hover{border-color:#5dc9a3;background:rgba(93,201,163,.06);color:#c2c0b8}
+    .source-btn .icon{font-size:28px}
+    #file-input,#camera-input{display:none}
+    .drop-zone{border:2px dashed #3a3a37;border-radius:12px;padding:28px 20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;font-size:13px;color:#7a7870}
+    .drop-zone:hover,.drop-zone.over{border-color:#5dc9a3;background:rgba(93,201,163,.05)}
+    .drop-zone span{color:#5dc9a3}
+    #live-wrap{display:none;flex-direction:column;gap:12px}
+    #live-preview{width:100%;border-radius:10px;background:#000;max-height:240px;transform:scaleX(-1)}
+    .rec-controls{display:flex;gap:10px}
+    .rec-btn{flex:1;padding:11px;border-radius:10px;font-size:14px;font-weight:600;border:none;cursor:pointer}
+    .rec-btn:disabled{opacity:.3;cursor:not-allowed}
+    #start-rec{background:#c0392b;color:#fff}
+    #stop-rec{background:#2a2a28;color:#c2c0b8;border:1px solid #3a3a37}
+    .rec-indicator{display:none;align-items:center;gap:6px;font-size:12px;color:#e06c6c}
+    .rec-dot{width:8px;height:8px;border-radius:50%;background:#e06c6c;animation:blink 1s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+    #preview-wrap{display:none;flex-direction:column;gap:10px}
+    #preview-video{width:100%;border-radius:10px;background:#000;max-height:240px}
+    .file-info{font-size:13px;color:#9e9c94;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}
+    .badge{font-size:11px;padding:2px 8px;border-radius:99px;background:#0d2e22;border:1px solid #1D9E75;color:#5dc9a3}
+    #progress-wrap{display:none;flex-direction:column;gap:8px}
+    .prog-bg{height:6px;background:#2e2e2b;border-radius:99px;overflow:hidden}
+    .prog-fill{height:100%;width:0%;background:linear-gradient(90deg,#1D9E75,#5dc9a3);border-radius:99px;transition:width .3s ease}
+    .prog-label{font-size:12px;color:#7a7870}
+    .btn{width:100%;padding:13px;border-radius:10px;font-size:15px;font-weight:600;border:none;cursor:pointer;transition:opacity .2s,transform .1s}
+    .btn:active{transform:scale(.98)}
+    .btn:disabled{opacity:.4;cursor:not-allowed}
+    .btn-primary{background:#1D9E75;color:#fff}
+    .btn-primary:hover:not(:disabled){opacity:.88}
+    .btn-secondary{background:#2a2a28;color:#c2c0b8;border:1px solid #3a3a37}
+    .btn-secondary:hover:not(:disabled){background:#323230}
+    #status{font-size:13px;text-align:center;min-height:18px;color:#7a7870}
+    #status.ok{color:#5dc9a3}
+    #status.err{color:#e06c6c}
+    #result-box{display:none;background:#0d2e22;border:1px solid #1D9E75;border-radius:10px;padding:16px;font-size:13px;color:#9ee8cc;word-break:break-all;line-height:1.6}
+    #result-box a{color:#5dc9a3}
   </style>
 </head>
 <body>
 <div class="card">
-  <div class="logo">🎥</div>
+  <a class="back" href="index.html">← Volver</a>
   <div>
-    <h1>Video Drive App</h1>
-    <p>Graba o sube videos directamente a Google Drive y reprodúcelos desde cualquier lugar.</p>
+    <h1>📤 Subir Video a Drive</h1>
+    <p class="sub">Graba con la cámara o elige un video existente.</p>
   </div>
-  <div class="divider"></div>
-  <div class="btn-group">
-    <a class="btn btn-primary" href="subir.html">
-      📤 Subir / Grabar video
-    </a>
-    <a class="btn btn-secondary" href="ver.html">
-      ▶️ Ver video guardado
-    </a>
+
+  <div id="step-source">
+    <div class="source-grid">
+      <div class="source-btn" id="btn-camera">
+        <span class="icon">📷</span><span>Grabar<br>con cámara</span>
+        <input type="file" id="camera-input" accept="video/*" capture="camcorder"/>
+      </div>
+      <div class="source-btn" id="btn-live">
+        <span class="icon">🔴</span><span>Grabar<br>en directo</span>
+      </div>
+      <div class="source-btn" id="btn-file">
+        <span class="icon">🎬</span><span>Elegir<br>archivo</span>
+        <input type="file" id="file-input" accept="video/*"/>
+      </div>
+    </div>
+    <div class="drop-zone" id="drop-zone" style="margin-top:14px">
+      Arrastra un video aquí o usa los botones.<br><span>Solo archivos de video.</span>
+    </div>
   </div>
-  <div class="footer">Los archivos se guardan en Google Drive vía Apps Script</div>
+
+  <div id="live-wrap">
+    <video id="live-preview" autoplay muted playsinline></video>
+    <div class="rec-indicator" id="rec-indicator"><div class="rec-dot"></div> Grabando…</div>
+    <div class="rec-controls">
+      <button class="rec-btn" id="start-rec">⏺ Iniciar</button>
+      <button class="rec-btn" id="stop-rec" disabled>⏹ Detener</button>
+    </div>
+    <button class="btn btn-secondary" id="cancel-live">Cancelar</button>
+  </div>
+
+  <div id="preview-wrap">
+    <video id="preview-video" controls muted playsinline></video>
+    <div class="file-info">
+      <span id="file-name">—</span>
+      <span id="file-size">—</span>
+      <span class="badge" id="source-badge">—</span>
+    </div>
+  </div>
+
+  <div id="progress-wrap">
+    <div class="prog-bg"><div class="prog-fill" id="prog-fill"></div></div>
+    <div class="prog-label" id="prog-label">Preparando…</div>
+  </div>
+
+  <div id="status"></div>
+  <div id="result-box"></div>
+
+  <button class="btn btn-primary"   id="upload-btn" style="display:none" disabled>⬆️ Subir a Drive</button>
+  <button class="btn btn-secondary" id="reset-btn"  style="display:none">↩ Elegir otro</button>
 </div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec";
+
+const stepSource   = document.getElementById("step-source");
+const cameraInput  = document.getElementById("camera-input");
+const fileInput    = document.getElementById("file-input");
+const dropZone     = document.getElementById("drop-zone");
+const liveWrap     = document.getElementById("live-wrap");
+const livePreview  = document.getElementById("live-preview");
+const recIndicator = document.getElementById("rec-indicator");
+const startRec     = document.getElementById("start-rec");
+const stopRec      = document.getElementById("stop-rec");
+const cancelLive   = document.getElementById("cancel-live");
+const previewWrap  = document.getElementById("preview-wrap");
+const previewVideo = document.getElementById("preview-video");
+const fileNameEl   = document.getElementById("file-name");
+const fileSizeEl   = document.getElementById("file-size");
+const sourceBadge  = document.getElementById("source-badge");
+const progressWrap = document.getElementById("progress-wrap");
+const progFill     = document.getElementById("prog-fill");
+const progLabel    = document.getElementById("prog-label");
+const statusEl     = document.getElementById("status");
+const resultBox    = document.getElementById("result-box");
+const uploadBtn    = document.getElementById("upload-btn");
+const resetBtn     = document.getElementById("reset-btn");
+
+let selectedFile = null, mediaStream = null, recorder = null, chunks = [];
+
+// Cámara nativa
+document.getElementById("btn-camera").addEventListener("click", () => cameraInput.click());
+cameraInput.addEventListener("change", () => { if(cameraInput.files[0]) loadFile(cameraInput.files[0], "📷 cámara"); });
+
+// Grabación en vivo
+document.getElementById("btn-live").addEventListener("click", async () => {
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"environment" }, audio:true });
+    livePreview.srcObject = mediaStream;
+    stepSource.style.display = "none";
+    liveWrap.style.display = "flex";
+  } catch(err) { setStatus("No se pudo acceder a la cámara: " + err.message, "err"); }
+});
+
+startRec.addEventListener("click", () => {
+  chunks = [];
+  const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9"
+             : MediaRecorder.isTypeSupported("video/webm") ? "video/webm" : "video/mp4";
+  recorder = new MediaRecorder(mediaStream, { mimeType: mime });
+  recorder.ondataavailable = e => { if(e.data.size > 0) chunks.push(e.data); };
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: recorder.mimeType });
+    const ext  = recorder.mimeType.includes("mp4") ? "mp4" : "webm";
+    const file = new File([blob], `grabacion_${Date.now()}.${ext}`, { type: blob.type });
+    stopStream();
+    loadFile(file, "🔴 directo");
+  };
+  recorder.start();
+  startRec.disabled = true; stopRec.disabled = false;
+  recIndicator.style.display = "flex";
+});
+
+stopRec.addEventListener("click", () => {
+  if(recorder && recorder.state !== "inactive") recorder.stop();
+  stopRec.disabled = true; startRec.disabled = false;
+  recIndicator.style.display = "none";
+});
+
+cancelLive.addEventListener("click", () => {
+  if(recorder && recorder.state !== "inactive") recorder.stop();
+  stopStream();
+  liveWrap.style.display = "none";
+  stepSource.style.display = "block";
+});
+
+function stopStream() {
+  if(mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+  livePreview.srcObject = null;
+  liveWrap.style.display = "none";
+  recIndicator.style.display = "none";
+  startRec.disabled = false; stopRec.disabled = true;
+}
+
+// Elegir archivo
+document.getElementById("btn-file").addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", () => { if(fileInput.files[0]) loadFile(fileInput.files[0], "🎬 archivo"); });
+
+// Drag & drop
+dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("over"); });
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("over"));
+dropZone.addEventListener("drop", e => {
+  e.preventDefault(); dropZone.classList.remove("over");
+  const f = e.dataTransfer.files[0];
+  if(f && f.type.startsWith("video/")) loadFile(f, "🎬 archivo");
+  else setStatus("Solo se aceptan archivos de video.", "err");
+});
+
+function loadFile(f, source) {
+  selectedFile = f;
+  previewVideo.src = URL.createObjectURL(f);
+  fileNameEl.textContent  = f.name;
+  fileSizeEl.textContent  = fmt(f.size);
+  sourceBadge.textContent = source;
+  stepSource.style.display  = "none";
+  liveWrap.style.display    = "none";
+  previewWrap.style.display = "flex";
+  uploadBtn.style.display   = "block";
+  resetBtn.style.display    = "block";
+  uploadBtn.disabled = false;
+  resultBox.style.display = "none";
+  setStatus("", "");
+}
+
+function fmt(b) {
+  if(b < 1024) return b + " B";
+  if(b < 1048576) return (b/1024).toFixed(1) + " KB";
+  return (b/1048576).toFixed(1) + " MB";
+}
+
+function setStatus(msg, type) { statusEl.textContent = msg; statusEl.className = type || ""; }
+
+// Subir
+uploadBtn.addEventListener("click", async () => {
+  if(!selectedFile) return;
+  uploadBtn.disabled = true; resetBtn.disabled = true;
+  resultBox.style.display = "none";
+  progressWrap.style.display = "flex";
+  progFill.style.background = "linear-gradient(90deg,#1D9E75,#5dc9a3)";
+  progFill.style.width = "10%"; progLabel.textContent = "Leyendo archivo…";
+  setStatus("Leyendo archivo…", "");
+
+  try {
+    const base64 = await toB64(selectedFile);
+    progFill.style.width = "30%"; progLabel.textContent = "Enviando…";
+    setStatus("Enviando al servidor…", "");
+
+    const res  = await fetch(SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ b64: base64, type: selectedFile.type, name: selectedFile.name })
+    });
+    progFill.style.width = "80%"; progLabel.textContent = "Procesando en Drive…";
+
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+
+    progFill.style.width = "100%"; progLabel.textContent = "¡Completado!";
+    setStatus("✅ Video guardado correctamente.", "ok");
+    resultBox.innerHTML = `<strong>📁</strong> ${data.name}<br><strong>🔗 URL:</strong><br><a href="${data.url}" target="_blank">${data.url}</a>`;
+    resultBox.style.display = "block";
+
+  } catch(err) {
+    progFill.style.width = "100%"; progFill.style.background = "#e06c6c";
+    setStatus("❌ " + err.message, "err");
+    progLabel.textContent = "Error al subir.";
+  } finally {
+    uploadBtn.disabled = false; resetBtn.disabled = false;
+  }
+});
+
+function toB64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result.split(",")[1]);
+    r.onerror = () => rej(new Error("No se pudo leer el archivo"));
+    r.readAsDataURL(file);
+  });
+}
+
+// Reset
+resetBtn.addEventListener("click", () => {
+  selectedFile = null;
+  fileInput.value = ""; cameraInput.value = "";
+  previewVideo.src = "";
+  previewWrap.style.display  = "none";
+  progressWrap.style.display = "none";
+  progFill.style.width = "0%";
+  progFill.style.background = "linear-gradient(90deg,#1D9E75,#5dc9a3)";
+  resultBox.style.display = "none";
+  uploadBtn.style.display = "none"; resetBtn.style.display = "none";
+  uploadBtn.disabled = true;
+  stepSource.style.display = "block";
+  setStatus("", "");
+});
+</script>
 </body>
 </html>
